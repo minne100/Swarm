@@ -1,0 +1,97 @@
+{
+  "communities": {
+    "0": [
+      "concept_bee",
+      "concept_dance",
+      "concept_honey",
+      "doc_readme",
+      "tool_graphify"
+    ],
+    "1": [
+      "concept_beehub",
+      "concept_hive",
+      "concept_swarm"
+    ]
+  },
+  "cohesion": {
+    "0": 0.6,
+    "1": 0.67
+  },
+  "gods": [
+    {
+      "id": "doc_readme",
+      "label": "Swarm Paradigm README",
+      "degree": 7
+    },
+    {
+      "id": "concept_dance",
+      "label": "Dance",
+      "degree": 3
+    },
+    {
+      "id": "concept_swarm",
+      "label": "Swarm",
+      "degree": 3
+    },
+    {
+      "id": "concept_bee",
+      "label": "Bee",
+      "degree": 2
+    },
+    {
+      "id": "concept_honey",
+      "label": "Honey",
+      "degree": 2
+    },
+    {
+      "id": "concept_hive",
+      "label": "Hive",
+      "degree": 2
+    },
+    {
+      "id": "concept_beehub",
+      "label": "BeeHub",
+      "degree": 2
+    },
+    {
+      "id": "tool_graphify",
+      "label": "graphify",
+      "degree": 1
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Swarm Paradigm README",
+      "target": "Hive",
+      "source_files": [
+        "README.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "note": "Bridges community 0 \u2192 community 1"
+    }
+  ],
+  "suggested_questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Swarm Paradigm README` connect `Community 0` to `Community 1`?",
+      "why": "High betweenness centrality (0.762) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Swarm` connect `Community 1` to `Community 0`?",
+      "why": "High betweenness centrality (0.024) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `graphify` to the rest of the system?",
+      "why": "1 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ],
+  "stats": {
+    "nodes": 8,
+    "edges": 11,
+    "communities": 2
+  }
+}

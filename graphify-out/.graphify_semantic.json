@@ -1,0 +1,207 @@
+{
+  "nodes": [
+    {
+      "id": "doc_readme",
+      "label": "Swarm Paradigm README",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_bee",
+      "label": "Bee",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_honey",
+      "label": "Honey",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_dance",
+      "label": "Dance",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_hive",
+      "label": "Hive",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_swarm",
+      "label": "Swarm",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_beehub",
+      "label": "BeeHub",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tool_graphify",
+      "label": "graphify",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "README.md:31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "doc_readme",
+      "target": "concept_bee",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:12",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "concept_honey",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:13",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "concept_dance",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:14",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "concept_hive",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:15",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "concept_swarm",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:16",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "concept_beehub",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:17",
+      "weight": 1.0
+    },
+    {
+      "source": "concept_bee",
+      "target": "concept_dance",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:3",
+      "weight": 1.0
+    },
+    {
+      "source": "concept_dance",
+      "target": "concept_honey",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:3",
+      "weight": 1.0
+    },
+    {
+      "source": "concept_swarm",
+      "target": "concept_hive",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:16",
+      "weight": 1.0
+    },
+    {
+      "source": "concept_swarm",
+      "target": "concept_beehub",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:17",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_readme",
+      "target": "tool_graphify",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "README.md:31",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
