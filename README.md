@@ -1,46 +1,199 @@
-# Swarm Paradigm - 蜂群范式：通用AI工作流范式
+﻿# Swarm Paradigm
 
-蜂群范式只需要输入任何人类语言形成的规则文本，就可以自动由多个原子粒度的json和js代码（我们将其称之为蜜蜂Bee），每个蜜蜂都附带完整的测试代码和测试结果，蜜蜂之间通过分布式流程总线（我们称之为舞蹈Dance）建立联系、传输数据（我们称为蜂蜜Honey），最后在核心引擎（我们称之为蜂房Hive）中将所有的内容整合起来，完成交付。规则修改时，蜜蜂会立刻打散，迅速重组，或自动产生新的蜜蜂。
-不过很多时候用户其实并不是十分清楚自己到底想要的什么，这个时候就需要一个专业的需求拆解助理，帮助用户将一个宏观目标逐层分解成蜜蜂粒度的细小规则，然后交给蜂房去完成。在此过程中还可以帮助用户进行头脑风暴、市场调研、竞品分析等前置工作。所有的交流过程都会自动存档，并生成知识图谱，供后续人员和AI在工作中参考。
-蜂群工作期间会不断生成中间产物供用户确认，所以并不是用户交代一句后就可以去睡大觉了，而是需要不断审核（我们称为养蜂Beekeeping）以确保不会跑偏。
-蜂群在向大模型提交数据时也不会无脑地将聊天记录全都一股脑地贴上去，而是会根据知识图谱和记忆宫殿技术，精炼出和当前话题有关的部分提交，可以将Token的使用量下降50%以上。
-这个范式不是给那些让AI自动收发邮件，上网收集资料，完成简单文案工作的用户使用的，而是为要处理复杂的业务流程，但是又找不到或不想雇佣程序员的用户准备的。
-MIT许可证。
+English | [简体中文](./README.zh-CN.md)
 
-## 核心概念
+Turn ambiguous human goals into executable, testable, auditable, and deliverable AI workflows.
 
-**蜜蜂 Bee** 由AI按照一定规范写成的js类，只能完成一个原子化的功能，有标准的执行接口，可运行在独立线程/进程/主机上，支持等待和挂起，工作完成或发生异常时都会输出报告。本身不保存任何蜂蜜，完全通过外部注入，处理完后和报告一起通过舞蹈提交，做到完全解耦。必须附带一个测试类，100%涵盖所有测试用例，支持版本更新，使用时可以指定某个版本，自动用最新版。
-**蜂蜜 Honey** 由AI生成的Json格式数据包，可以嵌套其他蜂蜜，数据类型必须明确，不支持Object类型。
-**舞蹈 Dance** 由AI生成的Json格式流程定义，明确规定在什么时候，有哪些的蜂蜜，是否远程异步，等待超时的时间，异常如何处理，是否保存日志，完成要提交什么结果，结果交给谁等。每个步骤都要有可供人类理解的文字描述。支持嵌套其他舞蹈。
-**蜂房 Hive** 执行环境，蜜蜂注册中心，也是最终的交付成果，养蜂过程中协同人类一起进行任务审核。
-**蜂群 Swarm** Node.js程序，管理运行蜂房，集成了一堆AI技能的综合系统。负责调用大模型，以TUI为主，支持web界面。
-**蜜蜂中心 BeeHub** 外部的蜜蜂集散市场，蜂群会提交自己生成的蜜蜂，也会从这里寻找能满足新业务需要的现成蜜蜂。
+## Positioning
 
-## 关键特性
+Swarm Paradigm is not about making AI chat better. It is about making AI deliver like an engineering system.
 
-| 特性 | 说明 |
-|---|---|
-| **模块化** | 每个蜜蜂独立文件、独立版本、独立测试 |
-| **异步友好** | 蜜蜂可暂停等待外部返回（玩家输入、网络、其他代理） |
-| **代理注入** | 网络、UI、AI 等模块以接口形式注入，蜜蜂无需关心实现 |
-| **可组合** | 通过舞蹈将蜜蜂组织出复杂的流程 |
-| **版本化** | 每个蜜蜂独立版本，支持灰度发布和自动迁移 |
-| **可溯源** | 执行历史完整记录，故障排查和重放 |
-| **容错** | 每个蜜蜂可实现 rollback()，事务支持 |
-| **分布式** | 蜜蜂可运行在不同线程/进程/主机上，消息驱动通信 |
-| **可视化** | 集成graphify，自动生成蜜蜂关系图，AI理解效率提升80% |
-| **生态共享** | BeeHub平台分享现成蜜蜂 |
+Through a layered model of Bee / Honey / Dance / Hive, Swarm decomposes complex business workflows into manageable atomic units and executes them under human review.
 
-## 关键技能
-蜜蜂生成
-蜂蜜生成
-舞蹈生成
-目标拆解
-蜂群可视化
-记忆宫殿
-项目管理
-软件开发
-代码审核
-单体测试
-整体测试
-UI设计
+## Why the Bee/Swarm Naming
+
+This is not branding decoration. It is a system metaphor:
+
+- **Bee**: one bee does one small action, mapped to one atomic capability unit
+- **Honey**: standardized output produced by bees, mapped to reusable data contracts
+- **Dance**: bees communicate direction and task signals by dancing, mapped to orchestration protocols
+- **Hive**: organization and governance center of the colony, mapped to runtime and control plane
+- **Swarm**: collective intelligence over a single giant agent, mapped to multi-agent collaboration
+- **Beekeeping**: beekeepers do not fly for bees; they observe and correct, mapped to “humans review and steer, not hand-write Bee/Honey/Dance”
+
+Core message: **complex outcomes come from a governed, composable, auditable collective, not one super agent.**
+
+## Design Principles (Hard Constraints)
+
+1. **Bee, Honey, and Dance MUST be AI-generated.**  
+Humans do not directly write these artifacts. Humans review, accept, and correct (Beekeeping).
+
+2. **Execution MUST be traceable, replayable, and auditable.**  
+Every stage should produce explainable intermediate artifacts and logs.
+
+3. **Complex workflows first; lightweight automation second.**  
+Swarm is designed for complex business collaboration, not simple script replacement.
+
+## Core Concepts
+
+### 1. Bee (Atomic Execution Unit)
+
+A Bee is an AI-generated JS class for exactly one atomic responsibility. Required characteristics:
+
+- Supports waiting and suspension (long-running async workflows)
+- Always outputs a report on success or failure
+- Stores no Honey internally; all data is injected from outside
+- Submits outputs and report together via Dance
+- Fully decoupled via interface-based dependency injection
+- Must include a test class; target is full test case coverage (100%)
+- Independently versioned and runnable by version
+
+In one sentence: **Bee is the smallest independently verifiable, replaceable, and evolvable production unit.**
+
+### 2. Honey (Standard Data Contract)
+
+Honey is AI-generated JSON payload used for Bee-to-Bee collaboration:
+
+- Strongly typed
+- Nestable
+- `Object` type is not allowed
+- Carries context and outputs across steps
+
+### 3. Dance (Workflow Orchestration Definition)
+
+Dance is an AI-generated JSON workflow definition describing who does what and when:
+
+- Execution order, parallelism, and async strategies
+- Timeout, retry, exception, and rollback strategies
+- Logging, submission rules, and delivery exits
+- Human-readable description per step
+
+### 4. Hive (Execution and Governance Runtime)
+
+- Bee registry and scheduler
+- Dance execution engine
+- Task review and delivery aggregation
+
+### 5. Swarm (Top-level Coordination System)
+
+Node.js coordination layer responsible for:
+
+- Goal decomposition
+- Workflow assembly
+- Model and tool orchestration
+- TUI first (Web extensible)
+
+### 6. BeeHub (Capability Marketplace)
+
+- Share reusable Bees
+- Discover ready-made capabilities
+- Reduce duplicate implementation cost
+
+## Memory Palace
+
+Memory Palace is a key capability for long-horizon context governance and token cost control.
+
+What it does:
+
+- Selects memory fragments strongly relevant to the current task
+- Reduces irrelevant recall noise and improves recall precision
+- Cuts redundant context and significantly lowers token usage
+- Works with the knowledge graph to build durable organizational memory
+
+Product meaning: **cheaper over time, more accurate over time, and increasingly aligned with your business context.**
+
+## Typical Workflow
+
+1. User provides a business goal in natural language
+2. System decomposes and clarifies the goal
+3. AI generates Bee / Honey / Dance
+4. Hive executes and produces intermediate outputs
+5. Humans perform Beekeeping (review and correction)
+6. Final delivery is produced and graph + memory are persisted
+
+## Key Features
+
+- Modular: atomic capabilities, low coupling, high reuse
+- Orchestratable: composable and iterative workflows
+- Testable: mandatory Bee testing
+- Auditable: source-backed outputs and replayable processes
+- Recoverable: exception handling and rollback support
+- Distributed-friendly: cross-thread/process/host execution
+- Visualized: graphify-based relationship graph
+- Memory-governed: lower recall noise and lower token cost
+
+## PM View: Feasibility and Value
+
+### Why It Matters
+
+1. Upgrades AI from “answering tool” to “delivery system”
+2. Reduces coordination failure in multi-role complex workflows
+3. Compounds reusable assets (Bee, Dance, graph, memory)
+
+### Feasibility
+
+#### 1) Problem-Solution Fit
+
+Best for:
+
+- Complex business workflow automation
+- Cross-role collaboration (PM/Ops/Engineering/QA)
+- AI pipelines requiring auditability and accountability
+
+#### 2) Technical Feasibility
+
+Enablers:
+
+- Mature Node.js orchestration ecosystem
+- JSON contracts for cross-module collaboration
+- Existing patterns for agent scheduling, queues, state machines
+- graphify + Memory Palace for understandable and compressed context
+
+Challenges:
+
+- Stability of task decomposition quality
+- Consistency and fault recovery in long workflows
+- Quality evaluation and automated acceptance standards
+
+Conclusion: **technically feasible; success depends on phased MVP validation of quality and cost.**
+
+#### 3) Business Feasibility
+
+Possible paths:
+
+- Open core + managed platform
+- Enterprise edition (audit, security, permissions, private deployment)
+- BeeHub ecosystem monetization
+
+### Recommended MVP Scope
+
+- Bee specification + runtime
+- Honey contract validation
+- Basic Dance orchestration (sequence/parallel/timeout/retry)
+- Hive logging and auditing
+- Minimal Memory Palace (task-level relevant memory extraction)
+- One closed-loop business template (decompose -> execute -> test -> report)
+
+### Suggested Metrics
+
+- End-to-end completion time (TAT)
+- Human review interventions per task
+- First-pass delivery acceptance rate
+- Mean time to recovery (MTTR)
+- Bee reuse rate
+- Token cost reduction per task
+
+## Fit / Non-Fit
+
+Good fit:
+
+- Teams handling complex workflows with constrained manpower
+- Organizations building a sustainable AI delivery system
+
+Not a fit:
+
+- One-off Q&A or lightweight script automation only
+
+## License
+
+MIT
