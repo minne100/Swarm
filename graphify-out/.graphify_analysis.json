@@ -1,97 +1,171 @@
 {
   "communities": {
     "0": [
-      "concept_bee",
-      "concept_dance",
-      "concept_honey",
-      "doc_readme",
-      "tool_graphify"
+      "bee",
+      "dance",
+      "hive",
+      "swarm"
     ],
     "1": [
-      "concept_beehub",
-      "concept_hive",
-      "concept_swarm"
+      "acceptance_criteria",
+      "mvp",
+      "risk_register",
+      "skill_first"
+    ],
+    "2": [
+      "beekeeping",
+      "honey",
+      "roadmap"
+    ],
+    "3": [
+      "knowledge_graph",
+      "memory_palace"
+    ],
+    "4": [
+      "goal_decomposition"
     ]
   },
   "cohesion": {
-    "0": 0.6,
-    "1": 0.67
+    "0": 1.0,
+    "1": 0.67,
+    "2": 0.67,
+    "3": 1.0,
+    "4": 1.0
   },
   "gods": [
     {
-      "id": "doc_readme",
-      "label": "Swarm Paradigm README",
+      "id": "bee",
+      "label": "Bee",
       "degree": 7
     },
     {
-      "id": "concept_dance",
-      "label": "Dance",
-      "degree": 3
-    },
-    {
-      "id": "concept_swarm",
+      "id": "swarm",
       "label": "Swarm",
+      "degree": 6
+    },
+    {
+      "id": "dance",
+      "label": "Dance",
+      "degree": 6
+    },
+    {
+      "id": "honey",
+      "label": "Honey",
+      "degree": 5
+    },
+    {
+      "id": "skill_first",
+      "label": "Skill-First",
+      "degree": 5
+    },
+    {
+      "id": "acceptance_criteria",
+      "label": "Acceptance Criteria",
+      "degree": 5
+    },
+    {
+      "id": "beekeeping",
+      "label": "Beekeeping",
+      "degree": 4
+    },
+    {
+      "id": "mvp",
+      "label": "MVP",
+      "degree": 4
+    },
+    {
+      "id": "hive",
+      "label": "Hive",
       "degree": 3
     },
     {
-      "id": "concept_bee",
-      "label": "Bee",
+      "id": "memory_palace",
+      "label": "Memory Palace",
       "degree": 2
-    },
-    {
-      "id": "concept_honey",
-      "label": "Honey",
-      "degree": 2
-    },
-    {
-      "id": "concept_hive",
-      "label": "Hive",
-      "degree": 2
-    },
-    {
-      "id": "concept_beehub",
-      "label": "BeeHub",
-      "degree": 2
-    },
-    {
-      "id": "tool_graphify",
-      "label": "graphify",
-      "degree": 1
     }
   ],
   "surprises": [
     {
-      "source": "Swarm Paradigm README",
-      "target": "Hive",
+      "source": "MVP",
+      "target": "Swarm",
       "source_files": [
-        "README.md",
+        "Docs/MVP_SCOPE.md",
         "README.md"
       ],
       "confidence": "EXTRACTED",
-      "relation": "references",
-      "note": "Bridges community 0 \u2192 community 1"
+      "relation": "defined_as_swarm_builds_swarm_itself",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Acceptance Criteria",
+      "target": "Bee",
+      "source_files": [
+        "Docs/ACCEPTANCE_CRITERIA.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "requires_ai_generated_artifact",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Acceptance Criteria",
+      "target": "Honey",
+      "source_files": [
+        "Docs/ACCEPTANCE_CRITERIA.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "requires_ai_generated_artifact",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Acceptance Criteria",
+      "target": "Dance",
+      "source_files": [
+        "Docs/ACCEPTANCE_CRITERIA.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "requires_ai_generated_artifact",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Risk Register",
+      "target": "Skill-First",
+      "source_files": [
+        "Docs/RISK_REGISTER.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "identifies_non_compliance_as_high_risk",
+      "why": "connects across different repos/directories; peripheral node `Risk Register` unexpectedly reaches hub `Skill-First`"
     }
   ],
   "suggested_questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `Swarm Paradigm README` connect `Community 0` to `Community 1`?",
-      "why": "High betweenness centrality (0.762) - this node is a cross-community bridge."
+      "question": "Why does `Swarm` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`?",
+      "why": "High betweenness centrality (0.306) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `Swarm` connect `Community 1` to `Community 0`?",
-      "why": "High betweenness centrality (0.024) - this node is a cross-community bridge."
+      "question": "Why does `Memory Palace` connect `Community 3` to `Community 0`?",
+      "why": "High betweenness centrality (0.141) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `MVP` connect `Community 1` to `Community 0`, `Community 2`?",
+      "why": "High betweenness centrality (0.135) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
-      "question": "What connects `graphify` to the rest of the system?",
-      "why": "1 weakly-connected nodes found - possible documentation gaps or missing edges."
+      "question": "What connects `Goal Decomposition`, `Knowledge Graph` to the rest of the system?",
+      "why": "2 weakly-connected nodes found - possible documentation gaps or missing edges."
     }
   ],
   "stats": {
-    "nodes": 8,
-    "edges": 11,
-    "communities": 2
+    "nodes": 14,
+    "edges": 26,
+    "communities": 5
   }
 }
