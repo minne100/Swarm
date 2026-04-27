@@ -71,6 +71,7 @@ Swarm 的标准生产路径是：
 Bee 是 AI 生成的 JS 类，只做一个原子功能。它的核心特点包括：
 
 - 支持等待和挂起（可异步长流程运行）
+- **不支持嵌套**（Bee 必须保持原子职责）
 - 工作完成或发生异常时都必须输出报告
 - 本身不保存任何 Honey，数据完全由外部注入
 - 处理完成后，结果与报告一并通过 Dance 提交
@@ -86,7 +87,8 @@ Honey 是 AI 生成的 JSON 数据包，是 Bee 间协作的数据载体：
 
 - 类型必须明确
 - 支持嵌套
-- 不支持 `Object` 类型
+- 不允许“无类型约束”的 `Object`
+- 允许“有明确 schema 的对象结构”
 - 用于跨步骤传递业务上下文与结果
 
 ### 3. Dance（流程编排定义）
@@ -94,6 +96,7 @@ Honey 是 AI 生成的 JSON 数据包，是 Bee 间协作的数据载体：
 Dance 是 AI 生成的 JSON 流程定义，用来描述“谁在何时做什么”：
 
 - 定义执行顺序、并行与异步策略
+- 支持 Dance 的嵌套组合
 - 定义超时、重试、异常与回滚策略
 - 定义日志记录、提交规则与交付出口
 - 每一步都应具备可供人类理解的描述
@@ -119,6 +122,21 @@ Node.js 协调层，负责：
 - 检索现成能力
 - 降低重复构建成本
 
+## 运行时架构（前后端原生 JS）
+
+为保持范式一致性，运行时架构明确为：
+
+1. 前端和后端都使用原生 JavaScript 编写
+2. 数据通信使用 WebSocket，传输载体统一为 Honey
+3. 将系统原生能力（如：加密、WebRTC、媒体、文件能力）封装为 **System Bee**
+4. 所有能力都通过统一 Bee 接口调用
+
+这样做的意义：
+
+- 保持执行模型一致（所有能力都纳入 Bee 工作流）
+- 避免过度依赖成熟框架导致范式偏移
+- 让系统能力和业务能力一样可测试、可审计、可复盘
+
 ## 记忆宫殿（Memory Palace）
 
 这是 Swarm 的关键能力之一，用于长期上下文治理与 Token 成本控制。
@@ -142,6 +160,42 @@ Node.js 协调层，负责：
 6. 人类进行 Beekeeping（审核与纠偏）
 7. 输出最终交付，并沉淀图谱与记忆宫殿
 
+## 适用群体与边界
+
+本项目追求的是“让低软件基础用户也能落地应用”，而不是极致执行性能。
+
+更适合：
+
+- 原型展示
+- 概念打磨与产品方向探索
+- 个人应用开发
+- 独立游戏开发
+- 通过对话驱动开发、希望快速把想法变成可运行应用的用户
+
+明确不做（边界）：
+
+- 极致高性能计算
+- 强实时控制系统
+- 金融核心清算/结算系统
+- 底层驱动与内核级基础设施
+- 需要极高合规与可用性保障的企业级核心系统
+
+## 开源依赖
+
+- MemPalace：https://github.com/MemPalace/mempalace
+- graphify：https://github.com/safishamsi/graphify
+- gbrain（参考）：https://github.com/garrytan/gbrain
+- gstack（参考）：https://github.com/garrytan/gstack
+- 安装说明：[Docs/INSTALLATION.md](./Docs/INSTALLATION.md)
+
+## Skill 技能包（选项优先）
+
+- 技能路由与核心技能：[Skills/README.md](./Skills/README.md)
+- 技能系统设计：[Docs/SKILL_SYSTEM.md](./Docs/SKILL_SYSTEM.md)
+- 交互方式：预设选项 + `0) 其他（自定义输入）`
+- 已内置 `skill-learning-loop`，用于技能进化建议生成
+
 ## License
 
 MIT
+

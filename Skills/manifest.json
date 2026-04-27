@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "skills": [
+    {
+      "name": "goal-decomposition",
+      "path": "Skills/goal-decomposition/SKILL.md",
+      "description": "Recursive goal decomposition with CEO/ENG review and per-node Dance mapping.",
+      "triggers": [
+        "decompose this goal",
+        "break this down",
+        "plan this project"
+      ],
+      "mutating": true
+    }
+  ]
+}

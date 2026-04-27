@@ -1,0 +1,3 @@
+﻿# Exclude local research repos from graphify corpus
+_references/
+_references/**
