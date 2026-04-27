@@ -1,0 +1,1 @@
+本轮已迁移规则到 AGENTS.md，清理了 SKILL.md 重复定义并统一脚本路由；已按新规则写入 History。

@@ -8,10 +8,11 @@ set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 PLAN_OUTPUT_ROOT="${PLAN_OUTPUT_ROOT:-${PROJECT_ROOT}/Examples}"
+HISTORY_ROOT="${HISTORY_ROOT:-${PROJECT_ROOT}/History}"
 SKILL_DIR="Skills/goal-decomposition"
 RUNTIME_ROOT="${PROJECT_ROOT}/artifacts/runtime"
 
-mkdir -p "${PLAN_OUTPUT_ROOT}" "${RUNTIME_ROOT}"
+mkdir -p "${PLAN_OUTPUT_ROOT}" "${RUNTIME_ROOT}" "${HISTORY_ROOT}"
 
 BRANCH="$(git -C "${PROJECT_ROOT}" branch --show-current 2>/dev/null || echo "unknown")"
 HEAD_SHORT="$(git -C "${PROJECT_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
@@ -43,6 +44,7 @@ cat > "${RUNTIME_ROOT}/goal-decomposition-preamble.md" <<EOF
 - head: ${HEAD_SHORT}
 - skill_dir: ${SKILL_DIR}
 - plan_output_root: ${PLAN_OUTPUT_ROOT}
+- history_root: ${HISTORY_ROOT}
 - runtime_targets: codex, swarm-native
 - required_tools_missing: ${missing_required[*]:-none}
 - optional_tools_missing: ${missing_optional[*]:-none}

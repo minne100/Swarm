@@ -1,7 +1,23 @@
+## 项目级约束（swarm 主项目）
+
+- 永远用中文回答。
+- 生成的文件必须是无头的 UTF-8 编码，便于用系统工具替换和查找。
+- 术语统一：
+  - `swarm` 项目统一称为“主项目”。
+  - 放在 `Examples/` 目录中的项目统一称为“子项目”。
+  - `MVP` 项目统一称为“聊天室项目”。
+- 全量轮次可追溯（必须严格执行）：
+  - 每个用户轮次都必须写入 trace 文件：`user_input.md`、`prompt_submitted.md`、`model_output.md`。
+  - Routing rule:
+    - If user message starts with `@MVP`, treat as MVP project round.
+    - Otherwise, treat as Swarm project round.
+  - 落盘路径：
+    - Swarm round (no `@MVP`): `History/<topic-summary>-<YYYYMMDD-HHmmss>/...`
+    - MVP round (`@MVP`): `Examples/p2p-chatroom-4p/History/<topic-summary>-<YYYYMMDD-HHmmss>/...`
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **swarm** (4913 symbols, 14426 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **swarm** (4942 symbols, 14447 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
