@@ -1,0 +1,4 @@
+INFO  2026-04-28T10:54:46 +193ms service=default version=local args=[] process_role=main run_id=d1d75c55-178b-49cf-8e60-2c3f32694b54 opencode
+INFO  2026-04-28T10:54:46 +2ms service=db path=E:\MyProgram\swarm\.swarm-data\opencode\opencode-local.db opening database
+INFO  2026-04-28T10:54:46 +87ms service=db count=13 mode=dev applying migrations
+INFO  2026-04-28T10:54:46 +4ms service=json-migration storage directory does not exist, skipping migration

@@ -1,0 +1,215 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --panel: #121721;
+  --panel-2: #161c29;
+  --line: #242c3d;
+  --text: #e8edf8;
+  --muted: #9aa7c7;
+  --accent: #4e86ff;
+  --accent-hover: #3e73e6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, #11151f, #0d1119);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #79a1ff;
+  padding: 0 8px 4px;
+}
+
+.add-project {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #2b313e;
+  color: var(--text);
+  border-radius: 14px;
+  height: 44px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.add-project:hover {
+  background: #353d4d;
+}
+
+.project-list {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.project-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  border-radius: 12px;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.project-item:hover {
+  background: #1a2130;
+}
+
+.project-item.active {
+  background: #26314a;
+  border-color: #3d4f73;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.messages {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 28px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.msg {
+  max-width: min(880px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.msg.user {
+  background: #1d2f56;
+  align-self: flex-end;
+}
+
+.msg.ai {
+  background: var(--panel);
+  align-self: flex-start;
+}
+
+.composer {
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  padding: 14px;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.file-tag {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 86px;
+  max-height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0e1320;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 15px;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #3b5a96;
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #232a3a;
+  color: var(--text);
+}
+
+button.secondary:hover {
+  background: #2b3447;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  min-width: 84px;
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    height: 220px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}

@@ -1,94 +1,103 @@
-## 项目级约束（swarm 主项目）
+- To regenerate the JavaScript SDK, run `./packages/sdk/js/script/build.ts`.
+- ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
+- The default branch in this repo is `dev`.
+- Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
+- Prefer automation: execute requested actions without confirmation unless blocked by missing info or safety/irreversibility.
 
-- 永远用中文回答。
-- 生成的文件必须是无头的 UTF-8 编码，便于用系统工具替换和查找。
-- 术语统一：
-  - `swarm` 项目统一称为“主项目”。
-  - 放在 `Examples/` 目录中的项目统一称为“子项目”。
-  - `MVP` 项目统一称为“聊天室项目”。
-- 全量轮次可追溯（必须严格执行）：
-  - 每个用户轮次都必须写入 trace 文件：`user_input.md`、`prompt_submitted.md`、`model_output.md`。
-  - Routing rule:
-    - If user message starts with `@MVP`, treat as MVP project round.
-    - Otherwise, treat as Swarm project round.
-  - 落盘路径：
-    - Swarm round (no `@MVP`): `History/<topic-summary>-<YYYYMMDD-HHmmss>/...`
-    - MVP round (`@MVP`): `Examples/p2p-chatroom-4p/History/<topic-summary>-<YYYYMMDD-HHmmss>/...`
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+## Style Guide
 
-This project is indexed by GitNexus as **swarm** (4942 symbols, 14447 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+### General Principles
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+- Keep things in one function unless composable or reusable
+- Avoid `try`/`catch` where possible
+- Avoid using the `any` type
+- Use Bun APIs when possible, like `Bun.file()`
+- Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
+- Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream
+- In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
 
-## Always Do
+Reduce total variable count by inlining when a value is only used once.
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+```ts
+// Good
+const journal = await Bun.file(path.join(dir, "journal.json")).json()
 
-## When Debugging
+// Bad
+const journalPath = path.join(dir, "journal.json")
+const journal = await Bun.file(journalPath).json()
+```
 
-1. `gitnexus_query({query: "<error or symptom>"})` — find execution flows related to the issue
-2. `gitnexus_context({name: "<suspect function>"})` — see all callers, callees, and process participation
-3. `READ gitnexus://repo/swarm/process/{processName}` — trace the full execution flow step by step
-4. For regressions: `gitnexus_detect_changes({scope: "compare", base_ref: "main"})` — see what your branch changed
+### Destructuring
 
-## When Refactoring
+Avoid unnecessary destructuring. Use dot notation to preserve context.
 
-- **Renaming**: MUST use `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` first. Review the preview — graph edits are safe, text_search edits need manual review. Then run with `dry_run: false`.
-- **Extracting/Splitting**: MUST run `gitnexus_context({name: "target"})` to see all incoming/outgoing refs, then `gitnexus_impact({target: "target", direction: "upstream"})` to find all external callers before moving code.
-- After any refactor: run `gitnexus_detect_changes({scope: "all"})` to verify only expected files changed.
+```ts
+// Good
+obj.a
+obj.b
 
-## Never Do
+// Bad
+const { a, b } = obj
+```
 
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+### Variables
 
-## Tools Quick Reference
+Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
 
-| Tool | When to use | Command |
-|------|-------------|---------|
-| `query` | Find code by concept | `gitnexus_query({query: "auth validation"})` |
-| `context` | 360-degree view of one symbol | `gitnexus_context({name: "validateUser"})` |
-| `impact` | Blast radius before editing | `gitnexus_impact({target: "X", direction: "upstream"})` |
-| `detect_changes` | Pre-commit scope check | `gitnexus_detect_changes({scope: "staged"})` |
-| `rename` | Safe multi-file rename | `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` |
-| `cypher` | Custom graph queries | `gitnexus_cypher({query: "MATCH ..."})` |
+```ts
+// Good
+const foo = condition ? 1 : 2
 
-## Impact Risk Levels
+// Bad
+let foo
+if (condition) foo = 1
+else foo = 2
+```
 
-| Depth | Meaning | Action |
-|-------|---------|--------|
-| d=1 | WILL BREAK — direct callers/importers | MUST update these |
-| d=2 | LIKELY AFFECTED — indirect deps | Should test |
-| d=3 | MAY NEED TESTING — transitive | Test if critical path |
+### Control Flow
 
-## Resources
+Avoid `else` statements. Prefer early returns.
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/swarm/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/swarm/clusters` | All functional areas |
-| `gitnexus://repo/swarm/processes` | All execution flows |
-| `gitnexus://repo/swarm/process/{name}` | Step-by-step execution trace |
+```ts
+// Good
+function foo() {
+  if (condition) return 1
+  return 2
+}
 
-## Self-Check Before Finishing
+// Bad
+function foo() {
+  if (condition) return 1
+  else return 2
+}
+```
 
-Before completing any code modification task, verify:
-1. `gitnexus_impact` was run for all modified symbols
-2. No HIGH/CRITICAL risk warnings were ignored
-3. `gitnexus_detect_changes()` confirms changes match expected scope
-4. All d=1 (WILL BREAK) dependents were updated
+### Schema Definitions (Drizzle)
 
-## CLI
+Use snake_case for field names so column names don't need to be redefined as strings.
 
-- Re-index: `npx gitnexus analyze`
-- Check freshness: `npx gitnexus status`
-- Generate docs: `npx gitnexus wiki`
+```ts
+// Good
+const table = sqliteTable("session", {
+  id: text().primaryKey(),
+  project_id: text().notNull(),
+  created_at: integer().notNull(),
+})
 
-<!-- gitnexus:end -->
+// Bad
+const table = sqliteTable("session", {
+  id: text("id").primaryKey(),
+  projectID: text("project_id").notNull(),
+  createdAt: integer("created_at").notNull(),
+})
+```
+
+## Testing
+
+- Avoid mocks as much as possible
+- Test actual implementation, do not duplicate logic into tests
+- Tests cannot run from repo root (guard: `do-not-run-tests-from-root`); run from package dirs like `packages/opencode`.
+
+## Type Checking
+
+- Always run `bun typecheck` from package directories (e.g., `packages/opencode`), never `tsc` directly.

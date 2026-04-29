@@ -1,179 +1,277 @@
-﻿---
+---
 name: goal-decomposition
-version: 1.2.0
-description: |
-  Decompose a user goal into a recursive, execution-ready plan in plain language
-  for non-technical users, with mandatory sign-off and full History traceability.
-triggers:
-  - "decompose this goal"
-  - "break this down"
-  - "plan this project"
-  - "turn idea into tasks"
-tools:
-  - read
-  - write
-  - grep
-mutating: true
-runtime_targets:
-  - codex
-  - swarm-native
-required_tools:
-  - read
-  - write
-  - grep
-fallback_if_unavailable: |
-  If required tools are unavailable, stop at current phase, write a blocker note
-  in markdown, and request user confirmation before continuing.
+description: 在 OpenCode 中把软件项目目标拆解成可执行文档，并强制执行目录输入、需求记录、版本迭代、确认修改、签名流程。用户提到“需求拆解/任务分解/项目规划/确认修改签名”时务必使用。
+trigger: /goal-decomposition
 ---
 
-# Goal Decomposition
+# /goal-decomposition
 
-## Preamble (run first)
+把用户的软件项目目标拆解成一份人人看得懂的执行文档，并完成版本管理、确认修改、签名留痕流程。
+
+## 0. 先做需求澄清（强制 Gate）
+
+在生成任何拆解文档前，必须先完成需求澄清。**未通过澄清 Gate，禁止开工拆解。**
+
+### 澄清目标
+
+- 把用户口头目标变成可执行范围。
+- 主动挖出用户尚未意识到的关键问题。
+- 提前暴露开发风险和常见坑。
+
+### 澄清方式（必须多轮）
+
+1. 第一轮：先复述你理解的目标（用通俗话）。
+2. 第二轮：提出关键选择题（范围、平台、优先级、验收标准）。
+3. 第三轮及以后：针对风险点继续追问，直到双方都确认“暂无补充”。
+
+每轮都要：
+
+- 输出“已确认事项”和“待确认事项”。
+- 优先用普通话术，不堆术语。
+- 一次只问最关键的 3-6 个问题，避免问题轰炸。
+- 把本轮沟通写入项目 `README.md`（即使还未生成拆解文档）。
+
+### 必问清单（最少覆盖）
+
+1. **范围边界**：是“简化版”还是“高还原版”？必须明确哪些功能做、哪些不做。
+2. **目标平台**：网页、桌面、手机，或多个平台。
+3. **玩法深度**：是否需要完整规则、关卡系统、存档、排行榜、音效、动画。
+4. **美术与资源**：是否使用原创素材、占位素材，是否有版权限制。
+5. **时间与优先级**：先做可玩最小版，还是一次做全。
+6. **验收标准**：什么叫“完成”（可玩、稳定、达到多少功能）。
+7. **非功能要求**：性能、兼容性、离线能力、数据保存方式。
+
+### 相似项目专用追问（例如“类似植物大战僵尸”）
+
+当用户说“类似 XX”时，必须追问并确认：
+
+- 是“玩法类似”还是“功能尽量复刻”？
+- 必须保留的核心机制有哪些？
+- 明确不做的机制有哪些？
+- 允许改动的地方有哪些（画风、节奏、单位数量、难度）？
+
+如果以上问题未答清，禁止进入拆解阶段。
+
+### 澄清完成判定（Gate）
+
+只有当以下条件全部满足，才可进入正式拆解：
+
+- 范围边界明确（做什么/不做什么）
+- 验收标准明确（如何判定完成）
+- 主要风险已列出并得到用户认可
+- 用户明确回复“可以开始拆解”或同义确认
+
+若用户拒绝细化，记录“按当前信息推进”的风险提示后再继续。
+
+## 你要做什么（必须按顺序）
+
+当用户触发本技能时，你必须按顺序执行以下流程，且不要跳步。
+
+1. 让用户输入项目目录（本地路径）。
+2. 让用户输入项目需求（可长可短，按用户原话记录）。
+3. 执行“0. 先做需求澄清（强制 Gate）”，通过后再继续。
+4. 在项目根目录创建或更新 `README.md`，记录：
+   - 本次修改意见（不要重复粘贴完整原始需求）
+   - 提交时间
+   - 本次生成的拆解文件路径
+5. 运行脚本生成本次版本信息（不要手算版本号）：
+   - `python Skills/goal-decomposition/scripts/prepare_goal_files.py --project-root "<项目目录>"`
+6. 以用户当前使用语言生成一份 **Markdown 拆解文档**，保存到：
+   - `项目根目录/docs/goal-decomposition/`
+   - 文件名：`{yyyymmdd_hhmmss}_version_{X}.md`
+   - 编码：UTF-8
+7. 在项目根目录 `README.md` 追加记录（用脚本，不手写）：
+   - `python Skills/goal-decomposition/scripts/update_readme_log.py --project-root "<项目目录>" --change-note "<本次修改意见或初始需求摘要>" --plan-file "<拆解文档路径>" --version <X> --status "待确认"`
+8. 先在普通回复中输出拆解文档全文（用于 OpenCode 右侧审查栏显示），并附文件路径。
+9. 紧接着输出文本提示（语言跟随用户）：
+   - 中文：`如果还需调整，请输入修改意见；否则请输入 OK。`
+   - 英文：`If you want changes, enter revision notes; otherwise type OK.`
+10. 处理用户输入：
+   - 输入 `OK`（大小写不敏感）-> 进入签名流程。
+   - 其他输入 -> 视为修改意见，生成新版本并重复流程。
+11. 如果用户输入 `OK`：
+   - 要求用户输入姓名用于签名
+   - 运行签名脚本写入当前版本文档：
+     - `python Skills/goal-decomposition/scripts/sign_plan.py --plan-file "<当前版本文档路径>" --sign-name "<姓名>"`
+   - 更新 `README.md` 状态为 `已确认`
+   - 注意：**签名不持久保存到系统状态**，每次确认都必须重新询问姓名
+
+## 关键约束
+
+- 不使用晦涩专业术语；面向没有 IT 基础的用户。
+- 拆解文档必须同时适配：简单项目、中等项目、复杂项目。
+- 文档必须包含版本号。
+- 文档必须包含“项目执行需要的完整规则”。
+- 文档末尾必须预留用户签名位置（当未确认时可先留空模板）。
+- 生成与修改都要保持 UTF-8 编码。
+- 不创建 `.request_v*.txt` 这类中间需求文件。
+- 未完成需求澄清 Gate 时，禁止生成拆解文档。
+
+## 路径与版本规则
+
+### 路径
+
+- 根目录：用户输入路径（记为 `PROJECT_ROOT`）
+- 拆解目录：`PROJECT_ROOT/docs/goal-decomposition/`
+- 日志文件：`PROJECT_ROOT/README.md`
+
+### 版本号计算
+
+- 扫描 `docs/goal-decomposition/` 下文件名匹配：`*_version_*.md`
+- 取最大版本号 `Xmax`
+- 新文档版本号 = `Xmax + 1`；若无历史文件则从 `1` 开始
+
+### 文件名
+
+- 时间格式：`yyyymmdd_hhmmss`（本地时间）
+- 最终：`{yyyymmdd_hhmmss}_version_{X}.md`
+
+## README.md 记录格式
+
+如果 `README.md` 不存在则创建，存在则追加以下块：
+
+```md
+## 需求记录 - {yyyy-mm-dd hh:mm:ss}
+
+- 提交时间：{yyyy-mm-dd hh:mm:ss}
+- 阶段：{需求澄清 | 拆解阶段 | 确认签名}
+- 修改意见：{本次修改意见；首版可写“初始需求：xxx（摘要）”}
+- 拆解文件：{相对或绝对路径}
+- 版本号：{X}
+- 状态：{待确认 | 已确认 | 已修改后重提}
+```
+
+注意：不要每次都粘贴完整原始需求，避免 README 快速膨胀。
+
+澄清阶段写入示例（尚未出文档）：
 
 ```bash
-bash Skills/goal-decomposition/scripts/preamble.sh
+python Skills/goal-decomposition/scripts/update_readme_log.py \
+  --project-root "<项目目录>" \
+  --change-note "澄清第1轮：已确认xxx，待确认yyy" \
+  --status "澄清中" \
+  --phase "需求澄清"
 ```
 
-## Contract
+## 拆解文档模板（必须遵守）
 
-This skill guarantees:
+你生成的每个版本文档都必须使用以下结构，标题与字段名可跟随用户语言变化，但结构不能缺项。
 
-- Recursive decomposition: `L0 -> L1 -> L2 -> L3`
-- Single artifact output for this phase (one markdown file only)
-- Plain-language wording for non-technical users (avoid IT jargon)
-- Interaction is option-first with `0) Other (custom input)`
-- All decomposition artifacts must be written in the same language as the user's input
-- The artifact must include a user sign-off section; no sign-off means no next step
-- Project-level traceability and routing rules must follow `AGENTS.md` (do not redefine here)
+```md
+# 项目需求拆解文档
 
-## Phases
+## 基本信息
+- 文档版本：V{X}
+- 生成时间：{yyyy-mm-dd hh:mm:ss}
+- 项目目录：{PROJECT_ROOT}
+- 需求来源：用户输入
 
-1. Capture goal and constraints.
-2. Run L1 decomposition (top streams).
-3. Write one user-facing plan file in plain language.
-4. Expand selected stream(s) to L2 packages.
-5. Expand selected package(s) to L3 executable tasks.
-6. Check wording and replace technical terms with plain language where needed.
-7. Assign `dance_id` to every node.
-8. Emit one markdown artifact with sign-off section:
-   - `PLAN_FOR_USER.md`
-9. Gate rule: if `PLAN_FOR_USER.md` is not signed off by user, stop and do not enter next phase.
+## 一句话目标
+{用非专业、易懂的话概括项目要做成什么}
 
-## Guided Interaction Cards
+## 先做什么，后做什么（总步骤）
+1. ...
+2. ...
+3. ...
 
-Use these cards in order, one by one:
+## 详细任务拆解（从易到难）
+### 第1部分：准备
+- 要做什么
+- 做完怎么判断
+- 如果失败怎么办
 
-```text
-[Goal Decomposition]
-Pick decomposition depth:
-1) Standard (recommended)
-2) Deep (complex/high-risk projects)
-3) Fast (prototype-first)
-0) Other (custom input)
+### 第2部分：核心功能
+- 要做什么
+- 做完怎么判断
+- 如果失败怎么办
+
+### 第3部分：完善与收尾
+- 要做什么
+- 做完怎么判断
+- 如果失败怎么办
+
+## 每一步都要遵守的规则（完整规则）
+1. 需求有歧义时，先问清楚再继续。
+2. 每完成一步，都要能被检查（有结果、有记录）。
+3. 不一次做太多，按小步推进。
+4. 发现问题先记录再修复，修复后再检查。
+5. 任何变更都要写入文档，保证可追溯。
+6. 涉及账号、密码、隐私信息时，必须先提醒风险。
+7. 若用户要求变更，必须新建版本，不覆盖历史版本。
+8. 文档内容保持通俗，不使用难懂术语。
+
+## 风险与应对（通俗版）
+- 可能遇到的问题：...
+- 提前预防方法：...
+- 出错后的补救步骤：...
+
+## 里程碑与完成标准
+- 里程碑1：...
+- 里程碑2：...
+- 全部完成标准：...
+
+## 本版本确认
+- 当前状态：待用户确认
+- 用户操作方式：输入修改意见 / 输入 OK
+
+## 用户签名
+- 签名：________________
+- 签名时间：________________
 ```
 
-```text
-[Scope Check]
-Pick scope style:
-1) Keep MVP small (recommended)
-2) Expand a little
-3) Keep only essentials
-0) Other (custom input)
+## 交互规则（非常重要）
+
+1. 先收集目录，再收集需求，顺序不可反。
+2. 需求输入后，必须进入多轮澄清，直到通过 Gate 才能拆解。
+3. 每轮澄清后都要给出：`已确认` / `待确认` 两个小结。
+4. 每次生成后，必须先在回复正文展示文档。
+5. 展示后直接提示：
+   - “如果还需调整，请输入修改意见；否则请输入 OK。”（语言跟随用户）
+6. 用户输入非 `OK` 内容时：
+   - 直接按“修改意见”处理
+   - 生成新版本并重复流程
+7. 用户输入 `OK`（大小写不敏感）后：
+   - 必须询问姓名：`请填写签名姓名`
+   - 收到姓名后写入文档，并记录签名时间
+8. `OK` 判断必须大小写不敏感（`ok/Ok/oK/OK` 都视为确认）。
+
+## OpenCode 环境实现建议
+
+在 OpenCode 中执行时，按以下方式落地：
+
+- 使用文件工具和本技能脚本创建目录与文件。
+- 在 OpenCode（非 TUI）场景，审查显示采用“普通回复正文 + markdown代码块”方式，让文档出现在右侧审查栏。
+- 不使用弹窗按钮确认，统一用文本口令：
+  - 用户输入 `OK`（大小写不敏感）表示确认
+  - 用户输入其他内容表示修改意见
+- 若文档过长，正文可截断显示并提示“已截断”，但必须给出完整文件路径。
+- 所有时间均使用本地时间。
+- 所有写入均为 UTF-8。
+
+## 质量标准
+
+- 用户不懂技术也能看懂每一节。
+- 同一需求多次修改时，版本增长清晰、记录完整。
+- README 与拆解文档的路径和版本信息一致。
+- 不丢失用户原始需求原文。
+
+## 捆绑资源（必须使用）
+
+- `scripts/prepare_goal_files.py`：创建 `docs/goal-decomposition` 并计算版本号、输出新文件路径。
+- `scripts/update_readme_log.py`：向项目 `README.md` 追加需求记录。
+- `scripts/sign_plan.py`：给当前版本文档写入签名和签名时间。
+- `scripts/build_confirmation_prompt.py`：可选脚本；仅在必须生成确认提示文案时使用。
+- `templates/decomposition_template.md`：拆解文档模板骨架（根据用户语言填充）。
+
+## 一段示例（风格参考）
+
+用户需求：创建一对一的网络聊天室，两个用户都退出时结束。
+
+拆解结果示例：
+
+```md
+# 系统启动聊天室程序等待用户进入，到2个用户都退出，程序结束
+## 用户可以匿名进入聊天室，给现有用户发送通知，如果聊天室内已有2人则不可进入
+## 用户可以互相发送消息，并显示对方的消息和发送时间
+## 用户可以退出聊天室，并给剩余的用户发消息
 ```
-
-```text
-[Build Style]
-Pick build style:
-1) Balanced (recommended)
-2) Speed-first
-3) Reliability-first
-0) Other (custom input)
-```
-
-## Output Format
-
-Generate one markdown file under `Examples/<slug>/` by default:
-- Swarm round (no `@MVP`): `Examples/<slug>/PLAN_FOR_USER.md`
-- MVP round (`@MVP`): `Examples/p2p-chatroom-4p/<slug>/PLAN_FOR_USER.md`
-
-If needed, override output root with:
-
-- env: `PLAN_OUTPUT_ROOT=/your/path`
-- arg: `--out-root /your/path`
-
-Then artifacts are written to `<out-root>/<slug>/`.
-
-1. `PLAN_FOR_USER.md`
-
-Use templates from `templates/`.
-
-### Example seed (for current MVP)
-
-For the goal "web-based P2P multi-user voice + text chat", L1 should start from:
-
-1. Skill generation
-2. Environment setup
-3. Project testing
-
-After user confirms "Skill generation", recursively expand to:
-
-1. Goal decomposition skill
-2. Bee generation skill
-3. Honey generation skill
-4. Dance generation skill
-5. Skill learning-loop
-
-All major and child nodes must map to unique `dance_id` values in the same plan file.
-
-## Anti-Patterns
-
-- Skipping recursive confirmation and dumping all levels at once
-- Producing JSON-only output for user-facing planning
-- Creating task nodes without `dance_id`
-- Asking open-ended questions when option cards can reduce ambiguity
-- Outputting in a different language than the user input
-- Proceeding to next phase without explicit user sign-off
-- Splitting this phase output into multiple files
-- Using technical wording that non-technical users cannot understand
-
-## Tools Used
-
-- `read`: inspect existing docs/constraints
-- `write`: produce markdown artifacts
-- `grep`: check naming collisions and consistency
-
-## Optional Helper Script
-
-You can generate a starter plan with:
-
-```bash
-node Skills/goal-decomposition/scripts/generate_sample_plan.js \
-  --slug p2p-chatroom \
-  --project "P2P Chatroom" \
-  --mission "Build a web-based multi-user voice + text chat MVP." \
-  --language zh \
-  --route-by-input true \
-  --user-input-text "@MVP 我要开发一个点对点聊天室"
-```
-
-Custom output root example:
-
-```bash
-node Skills/goal-decomposition/scripts/generate_sample_plan.js \
-  --slug p2p-chatroom \
-  --out-root Examples
-```
-
-Round traceability logging helper:
-
-```bash
-node Skills/goal-decomposition/scripts/log_history.js \
-  --route-by-input true \
-  --user-input-route-file temp/user_input.md \
-  --topic "p2p-chatroom-goal-decomposition" \
-  --user-input-file temp/user_input.md \
-  --prompt-file temp/prompt_submitted.md \
-  --output-file temp/model_output.md
-```
-
-For any other project, just change `--slug`, `--project`, and `--mission`.

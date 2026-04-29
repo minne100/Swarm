@@ -1,1 +1,0 @@
-将项目级路由与可追溯规则迁移到 AGENTS.md；清理 SKILL.md 中重复定义；把脚本从 @MCP/mcp 统一改为 @MVP/mvp；随后按新规则落盘本轮 trace。

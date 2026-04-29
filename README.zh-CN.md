@@ -10,6 +10,8 @@ Swarm Paradigm 不是“让 AI 聊天更聪明”，而是“让 AI 像工程系
 
 它通过 Bee / Honey / Dance / Hive 的分层抽象，把复杂业务流程拆成可管理的最小单元，并在人类审核下完成端到端执行，原则上用户不需要看到任何代码，就能得到需要的软件产品。
 
+本项目基于opencode开源项目构建底座。
+
 ## 为什么叫“蜜蜂 / 蜂群”
 
 这个命名不是营销包装，而是系统设计隐喻：
@@ -19,7 +21,7 @@ Swarm Paradigm 不是“让 AI 聊天更聪明”，而是“让 AI 像工程系
 - **Dance（蜂舞）**：蜜蜂通过舞蹈传递方向和任务信号，对应流程编排与协作协议
 - **Hive（蜂房）**：蜂群的组织与治理中心，对应执行环境与任务治理
 - **Swarm（蜂群）**：整体协同而非单体智能，对应多 Agent 分工协作系统
-- **Beekeeping（养蜂）**：养蜂人不替蜜蜂飞行，只做观察与校正，对应“人类只审核与纠偏，不直接写 Bee/Honey/Dance”
+- **Beekeeping（养蜂）**：养蜂人不生产蜜蜂不采蜜，只做观察与引导，对应“人类只审核与纠偏，不直接写 Bee/Honey/Dance”
 
 这套命名强调一个核心理念：**复杂目标不是由“一个超级 Agent”完成，而是由可组合、可治理、可审计的协同群体完成。**
 
@@ -115,12 +117,13 @@ Dance 规定的是 **Bee 类型的拓扑顺序**，而不指定具体实例。
 
 ### 5. Swarm（上层协调系统）
 
-Node.js 协调层，负责：
+运行在 Bun 中的协调层，负责：
 
 - 需求拆解
 - Skill 选择与编排
 - 模型与工具调度
-- TUI（可扩展 Web）
+- webUI
+- 部署时将所有的Honey和Dance转换成js代码，和用到的Bee一起打包压缩成一个单独的js文件，做到运行性能零损失
 
 ### 6. BeeHub（能力市场）
 
@@ -989,18 +992,13 @@ MVP 4：验证“Swarm 能否处理复杂协作系统”
 
 ## 开源依赖
 
+- opencode：https://github.com/anomalyco/opencode
 - MemPalace：https://github.com/MemPalace/mempalace
 - graphify：https://github.com/safishamsi/graphify
 - gbrain（参考）：https://github.com/garrytan/gbrain
 - gstack（参考）：https://github.com/garrytan/gstack
 - 安装说明：[Docs/INSTALLATION.md](./Docs/INSTALLATION.md)
 
-## Skill 技能包（选项优先）
-
-- 技能路由与核心技能：[Skills/README.md](./Skills/README.md)
-- 技能系统设计：[Docs/SKILL_SYSTEM.md](./Docs/SKILL_SYSTEM.md)
-- 交互方式：预设选项 + `0) 其他（自定义输入）`
-- 已内置 `skill-learning-loop`，用于技能进化建议生成
 
 ## License
 
