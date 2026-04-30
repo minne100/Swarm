@@ -1,0 +1,10 @@
+{
+  "name": "HttpApiResponseHoney",
+  "description": "Normalized backend API response envelope to be converted into HTTP response.",
+  "payload": {
+    "status": "number",
+    "kind": "string",
+    "headers": "object",
+    "body": "any"
+  }
+}

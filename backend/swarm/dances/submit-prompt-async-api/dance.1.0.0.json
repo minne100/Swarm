@@ -1,0 +1,24 @@
+{
+  "name": "SubmitPromptAsyncApiDance",
+  "version": "1.0.0",
+  "description": "Queue prompt work by session and return accepted immediately",
+  "input": "SubmitPromptAsyncRequestHoney",
+  "output": "SubmitPromptQueuedHoney",
+  "bees": [
+    {
+      "name": "QueuePromptAsyncApiBee",
+      "version": "1.0.0",
+      "alias": "queue-prompt-async-api"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "queue-prompt-async",
+      "alias": "queue-prompt-async-api",
+      "description": "Enqueue prompt run in background queue",
+      "input": "SubmitPromptAsyncRequestHoney",
+      "output": "SubmitPromptQueuedHoney"
+    }
+  ]
+}

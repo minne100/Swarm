@@ -1,0 +1,24 @@
+{
+  "name": "HealthApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle health request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "HealthApiRequestBee",
+      "version": "1.0.0",
+      "alias": "health-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-health",
+      "alias": "health-api-request",
+      "description": "Return health response",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

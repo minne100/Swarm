@@ -1,0 +1,24 @@
+{
+  "name": "ListProjectsApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle list projects request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "ListProjectsApiRequestBee",
+      "version": "1.0.0",
+      "alias": "list-projects-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-list-projects",
+      "alias": "list-projects-api-request",
+      "description": "Return projects from backend state",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

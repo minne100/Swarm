@@ -1,0 +1,24 @@
+{
+  "name": "ListMessagesApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle list messages API request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "ListMessagesApiRequestBee",
+      "version": "1.0.0",
+      "alias": "list-messages-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-list-messages",
+      "alias": "list-messages-api-request",
+      "description": "Return session messages by query limit",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

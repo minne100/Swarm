@@ -57,7 +57,11 @@ export class QueueAssistantMessageApiBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     try {
-      const message = this.context.appendAssistantMessage(payload.sessionID, payload.reply)
+      const existingMessage =
+        payload.messageID && typeof this.context.getSessionMessage === "function"
+          ? this.context.getSessionMessage(payload.sessionID, payload.messageID)
+          : null
+      const message = existingMessage || this.context.appendAssistantMessage(payload.sessionID, payload.reply)
       const outputHoney = {
         type: "PromptResultHoney",
         payload: {

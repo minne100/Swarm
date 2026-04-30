@@ -17,7 +17,15 @@ test("sync-attachments bee contract", async () => {
   },
     state: { files: [] },
     syncFiles(files) {
-      this.state.files = Array.from(files)
+      const next = Array.from(files)
+      const merged = [...this.state.files, ...next]
+      const seen = new Set()
+      this.state.files = merged.filter((file) => {
+        const key = typeof file?.name === "string" ? file.name : JSON.stringify(file)
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
     },
   }
   const bee = syncAttachmentsBee(context)
@@ -25,7 +33,15 @@ test("sync-attachments bee contract", async () => {
     type: "UpdateAttachmentsHoney",
     payload: { files: [{ name: "a.txt" }] },
   })
+  await bee.execute({
+    type: "UpdateAttachmentsHoney",
+    payload: { files: [{ name: "b.txt" }] },
+  })
+  await bee.execute({
+    type: "UpdateAttachmentsHoney",
+    payload: { files: [{ name: "a.txt" }] },
+  })
   expect(output.resultHoney.type).toBe("AttachmentsChangedHoney")
   expect(output.reportHoney.type).toBe("BeeReportHoney")
-  expect(context.state.files.length).toBe(1)
+  expect(context.state.files.length).toBe(2)
 })

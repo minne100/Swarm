@@ -1,0 +1,24 @@
+{
+  "name": "EnsureSessionHttpRequestDance",
+  "version": "1.0.0",
+  "description": "Handle ensure session HTTP request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "EnsureSessionHttpRequestBee",
+      "version": "1.0.0",
+      "alias": "ensure-session-http-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-ensure-session",
+      "alias": "ensure-session-http-request",
+      "description": "Map HTTP payload to ensure session dance",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

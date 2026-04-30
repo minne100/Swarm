@@ -1,4 +1,5 @@
 import path from "node:path"
+import { mkdirSync } from "node:fs"
 import { loadBunProjectResources } from "./loader.bun.js"
 import { bootBunLoadedProject } from "./swarm-hive.js"
 
@@ -38,7 +39,26 @@ function createContractHelpers() {
 }
 
 function createID(prefix) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`
+}
+
+function textPart(text) {
+  return [{ type: "text", text: typeof text === "string" ? text : "" }]
+}
+
+function ensureAssistantTextMessage(message, createdAt = Date.now()) {
+  if (!message.info || typeof message.info !== "object") message.info = {}
+  message.info.role = "assistant"
+  if (!message.info.time || typeof message.info.time !== "object") message.info.time = { created: createdAt }
+  if (!Array.isArray(message.parts) || message.parts.length === 0) {
+    message.parts = textPart("")
+    return message
+  }
+  const first = message.parts[0]
+  if (!first || first.type !== "text" || typeof first.text !== "string") {
+    message.parts = textPart("")
+  }
+  return message
 }
 
 function normalizeParts(parts) {
@@ -52,7 +72,8 @@ function normalizeParts(parts) {
       if (part.type === "file") {
         const filename = typeof part.filename === "string" ? part.filename : "file"
         const mime = typeof part.mime === "string" ? part.mime : "application/octet-stream"
-        return { type: "text", text: `[attachment] ${filename} (${mime})` }
+        const url = typeof part.url === "string" ? part.url : ""
+        return { type: "file", filename, mime, url }
       }
       return null
     })
@@ -61,16 +82,24 @@ function normalizeParts(parts) {
   return [{ type: "text", text: "" }]
 }
 
-function textFromParts(parts) {
-  const list = normalizeParts(parts)
-  return list
-    .filter((part) => part.type === "text" && typeof part.text === "string")
-    .map((part) => part.text.trim())
-    .filter(Boolean)
-    .join("\n\n")
+function ensureProjectDirectory(projectsRoot, projectName) {
+  const name = typeof projectName === "string" ? projectName.trim() : ""
+  if (!name) throw new Error("project name is required")
+  if (name === "." || name === ".." || /[\\/]/.test(name)) {
+    throw new Error(`invalid project name: ${projectName}`)
+  }
+  const target = path.resolve(projectsRoot, name)
+  const relative = path.relative(projectsRoot, target)
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`invalid project name: ${projectName}`)
+  }
+  mkdirSync(target, { recursive: true })
+  return target
 }
 
 function createBackendContext(projectConfig) {
+  const projectsRoot = path.resolve(import.meta.dir, "../projects")
+  mkdirSync(projectsRoot, { recursive: true })
   const state = structuredClone(projectConfig.initialState || {})
   if (!Array.isArray(state.projects)) state.projects = []
   if (!state.sessions || typeof state.sessions !== "object") state.sessions = {}
@@ -78,6 +107,8 @@ function createBackendContext(projectConfig) {
   const helpers = createContractHelpers()
   return {
     state,
+    projectConfig,
+    llmConfig: projectConfig.llm || {},
     resolveWithReport: helpers.resolveWithReport,
     rejectWithReport: helpers.rejectWithReport,
     createProject(name, projectId) {
@@ -86,6 +117,7 @@ function createBackendContext(projectConfig) {
         typeof name === "string" && name.trim() ? name.trim() : `Project ${state.projects.length + 1}`
       const existing = state.projects.find((item) => item.id === id)
       if (existing) return existing
+      ensureProjectDirectory(projectsRoot, projectName)
       const project = {
         id,
         name: projectName,
@@ -117,6 +149,11 @@ function createBackendContext(projectConfig) {
     getSession(sessionID) {
       return state.sessions[sessionID] || null
     },
+    getSessionMessage(sessionID, messageID) {
+      const session = this.getSession(sessionID)
+      if (!session) return null
+      return session.messages.find((item) => item.id === messageID) || null
+    },
     hasSession(sessionID) {
       return Boolean(state.sessions[sessionID])
     },
@@ -139,13 +176,48 @@ function createBackendContext(projectConfig) {
       if (!session) throw new Error(`session not found: ${sessionID}`)
       const message = {
         id: createID("m"),
-        parts: [{ type: "text", text: typeof replyText === "string" ? replyText : "" }],
+        parts: textPart(replyText),
         info: {
           role: "assistant",
           time: { created: Date.now() },
+          stream: { done: true },
         },
       }
       session.messages.push(message)
+      return message
+    },
+    beginAssistantStream(sessionID) {
+      const session = this.getSession(sessionID)
+      if (!session) throw new Error(`session not found: ${sessionID}`)
+      const message = {
+        id: createID("m"),
+        parts: textPart(""),
+        info: {
+          role: "assistant",
+          time: { created: Date.now() },
+          stream: { done: false },
+        },
+      }
+      session.messages.push(message)
+      return message
+    },
+    updateAssistantStream(sessionID, messageID, replyText) {
+      const message = this.getSessionMessage(sessionID, messageID)
+      if (!message) throw new Error(`assistant stream message not found: ${messageID}`)
+      ensureAssistantTextMessage(message)
+      message.parts[0].text = typeof replyText === "string" ? replyText : ""
+      return message
+    },
+    finishAssistantStream(sessionID, messageID, replyText) {
+      const message = this.updateAssistantStream(sessionID, messageID, replyText)
+      message.info.stream = { done: true }
+      return message
+    },
+    failAssistantStream(sessionID, messageID) {
+      const message = this.getSessionMessage(sessionID, messageID)
+      if (!message) return null
+      ensureAssistantTextMessage(message)
+      message.info.stream = { done: true, failed: true }
       return message
     },
     listMessages(sessionID, limit) {
@@ -155,110 +227,7 @@ function createBackendContext(projectConfig) {
       if (session.messages.length <= count) return [...session.messages]
       return session.messages.slice(session.messages.length - count)
     },
-    async callLLM(sessionID) {
-      const session = this.getSession(sessionID)
-      if (!session) throw new Error(`session not found: ${sessionID}`)
-      const baseUrl = projectConfig?.llm?.baseUrl
-      const apiKey = projectConfig?.llm?.apiKey
-      const chatPath = projectConfig?.llm?.chatPath || "/v1/chat/completions"
-      if (!baseUrl || !apiKey) {
-        throw new Error("missing llm.baseUrl or llm.apiKey in backend/project.js (or SWARM_LLM_* env)")
-      }
-      const model = projectConfig?.llm?.model
-      if (!model) {
-        throw new Error("missing llm.model in backend/project.js (or SWARM_LLM_MODEL env)")
-      }
-      const requestUrl = `${String(baseUrl).replace(/\/$/, "")}${String(chatPath).startsWith("/") ? chatPath : `/${chatPath}`}`
-      const messages = session.messages
-        .map((msg) => {
-          const role = msg?.info?.role || msg?.role
-          if (role !== "user" && role !== "assistant" && role !== "system") return null
-          return {
-            role,
-            content: textFromParts(msg.parts),
-          }
-        })
-        .filter((item) => item && item.content)
-      const body = {
-        model,
-        messages,
-      }
-      const response = await fetch(requestUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(body),
-      })
-      const text = await response.text()
-      if (!response.ok) {
-        throw new Error(`llm request failed (${response.status}) url=${requestUrl}: ${text || response.statusText}`)
-      }
-      const json = !text
-        ? {}
-        : (() => {
-            try {
-              return JSON.parse(text)
-            } catch {
-              const preview = text.slice(0, 160).replace(/\s+/g, " ").trim()
-              throw new Error(
-                `llm returned non-JSON response url=${requestUrl}, check llm.baseUrl/chatPath (got: ${preview || "empty"})`,
-              )
-            }
-          })()
-      const choices = Array.isArray(json.choices) ? json.choices : []
-      const choice = choices[0]
-      if (typeof choice?.message?.content === "string" && choice.message.content.trim()) {
-        return choice.message.content
-      }
-      if (Array.isArray(choice?.message?.content)) {
-        const joined = choice.message.content
-          .map((part) => (typeof part?.text === "string" ? part.text : ""))
-          .filter(Boolean)
-          .join("\n")
-        if (joined.trim()) return joined
-      }
-      if (typeof json.output_text === "string" && json.output_text.trim()) return json.output_text
-      throw new Error("llm response missing assistant text")
-    },
-    queuePrompt(runtime, sessionID, parts, config) {
-      const session = this.getSession(sessionID)
-      if (!session) throw new Error(`session not found: ${sessionID}`)
-      session.pending = session.pending
-        .then(async () => {
-          const run = runtime.startDance(config.api.dances.submitPrompt, {
-            type: config.api.honeyTypes.submitPrompt,
-            payload: {
-              sessionID,
-              parts: normalizeParts(parts),
-            },
-          })
-          if (!run) throw new Error("submit prompt dance failed to start")
-          const finalHoney = await run.done
-          if (finalHoney?.type === "ApiErrorHoney" && finalHoney?.payload?.detail) {
-            console.warn(`[Backend] prompt failed (${sessionID}): ${finalHoney.payload.detail}`)
-          }
-        })
-        .catch((error) => {
-          const detail = error instanceof Error ? error.message : String(error)
-          this.appendAssistantMessage(sessionID, `Request failed: ${detail}`)
-        })
-      return session.pending
-    },
   }
-}
-
-function parseRequestBody(request) {
-  return request
-    .text()
-    .then((text) => {
-      if (!text) return {}
-      return JSON.parse(text)
-    })
-    .catch(() => {
-      throw new Error("invalid JSON body")
-    })
 }
 
 function jsonResponse(payload, status = 200, extraHeaders = {}) {
@@ -269,6 +238,25 @@ function jsonResponse(payload, status = 200, extraHeaders = {}) {
       ...extraHeaders,
     },
   })
+}
+
+function responseFromApiHoney(honey) {
+  const payload = honey?.payload || {}
+  const status = Number.isInteger(payload.status) ? payload.status : 200
+  const headers = payload.headers && typeof payload.headers === "object" ? payload.headers : {}
+  if (payload.kind === "empty") {
+    return new Response(null, {
+      status,
+      headers,
+    })
+  }
+  if (payload.kind === "text") {
+    return new Response(typeof payload.body === "string" ? payload.body : "", {
+      status,
+      headers,
+    })
+  }
+  return jsonResponse(payload.body || {}, status, headers)
 }
 
 function normalizeApiError(error) {
@@ -311,158 +299,6 @@ async function runDance(runtime, danceName, inputHoney) {
   return run.done
 }
 
-async function handleApiRequest(request, runtime, context, config) {
-  const pathname = pathFromUrl(request.url)
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    })
-  }
-  if (request.method === "GET" && pathname === "/health") {
-    return jsonResponse(
-      { ok: true, ts: Date.now() },
-      200,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  if (request.method === "GET" && pathname === "/api/projects") {
-    return jsonResponse(
-      { projects: context.listProjects() },
-      200,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  if (request.method === "POST" && pathname === "/api/projects") {
-    const body = await parseRequestBody(request)
-    const finalHoney = await runDance(runtime, config.api.dances.createProject, {
-      type: config.api.honeyTypes.createProject,
-      payload: {
-        name: body.name,
-        projectId: body.projectId,
-      },
-    })
-    if (finalHoney?.type === "ProjectCreatedHoney") {
-      return jsonResponse(
-        finalHoney.payload.project,
-        201,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    if (finalHoney?.type === "ApiErrorHoney") {
-      return jsonResponse(
-        { error: finalHoney.payload?.detail || "create project failed" },
-        400,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    return jsonResponse(
-      { error: "unexpected dance output" },
-      500,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  if (request.method === "POST" && pathname === "/session") {
-    const body = await parseRequestBody(request)
-    const finalHoney = await runDance(runtime, config.api.dances.ensureSession, {
-      type: config.api.honeyTypes.ensureSession,
-      payload: {
-        projectId: body.projectId,
-        title: body.title,
-      },
-    })
-    if (finalHoney?.type === "SessionReadyHoney") {
-      return jsonResponse(
-        {
-          id: finalHoney.payload.sessionID,
-          projectId: finalHoney.payload.projectId,
-        },
-        200,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    if (finalHoney?.type === "ApiErrorHoney") {
-      return jsonResponse(
-        { error: finalHoney.payload?.detail || "ensure session failed" },
-        400,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    return jsonResponse(
-      { error: "unexpected dance output" },
-      500,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  const promptMatch = pathname.match(/^\/session\/([^/]+)\/prompt_async$/)
-  if (request.method === "POST" && promptMatch) {
-    const sessionID = decodeURIComponent(promptMatch[1])
-    const body = await parseRequestBody(request)
-    if (!context.hasSession(sessionID)) {
-      return jsonResponse(
-        { error: `session not found: ${sessionID}` },
-        404,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    context.queuePrompt(runtime, sessionID, body.parts, config)
-    return jsonResponse(
-      { accepted: true, sessionID },
-      202,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  const messageMatch = pathname.match(/^\/session\/([^/]+)\/message$/)
-  if (request.method === "GET" && messageMatch) {
-    const sessionID = decodeURIComponent(messageMatch[1])
-    if (!context.hasSession(sessionID)) {
-      return jsonResponse(
-        { error: `session not found: ${sessionID}` },
-        404,
-        {
-          "Access-Control-Allow-Origin": "*",
-        },
-      )
-    }
-    const limitRaw = new URL(request.url).searchParams.get("limit")
-    const limit = limitRaw ? Number(limitRaw) : 80
-    return jsonResponse(
-      {
-        messages: context.listMessages(sessionID, Number.isInteger(limit) ? limit : 80),
-      },
-      200,
-      {
-        "Access-Control-Allow-Origin": "*",
-      },
-    )
-  }
-  return null
-}
-
 const loadedProject = await loadBunProjectResources()
 const projectConfig = loadedProject.projectConfig
 const context = createBackendContext(projectConfig)
@@ -475,32 +311,37 @@ const server = Bun.serve({
   hostname: projectConfig.server.host,
   port: projectConfig.server.port,
   fetch: async (request) => {
-    const pathname = pathFromUrl(request.url)
-    const isApiRoute = pathname.startsWith("/api/") || pathname.startsWith("/session/") || pathname === "/session" || pathname === "/health"
-    if (isApiRoute) {
-      try {
-        const response = await handleApiRequest(request, runtime, context, projectConfig)
-        if (response) return response
-        return jsonResponse(
-          { error: "not found" },
-          404,
-          {
-            "Access-Control-Allow-Origin": "*",
-          },
-        )
-      } catch (error) {
-        const normalized = normalizeApiError(error)
-        const status = normalized.message === "invalid JSON body" ? 400 : 500
-        return jsonResponse(
-          { error: normalized.message },
-          status,
-          {
-            "Access-Control-Allow-Origin": "*",
-          },
-        )
-      }
+    try {
+      const bodyText =
+        request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS" ? "" : await request.text()
+      const finalHoney = await runDance(runtime, projectConfig.api.dances.dispatchRequest, {
+        type: projectConfig.api.honeyTypes.dispatchRequest,
+        payload: {
+          method: request.method,
+          url: request.url,
+          bodyText,
+        },
+      })
+      if (finalHoney?.type === "HttpApiResponseHoney") return responseFromApiHoney(finalHoney)
+      if (finalHoney?.type === "ApiNotHandledHoney") return staticResponse(request, projectConfig)
+      return jsonResponse(
+        { error: "unexpected api dispatcher output" },
+        500,
+        {
+          "Access-Control-Allow-Origin": "*",
+        },
+      )
+    } catch (error) {
+      const normalized = normalizeApiError(error)
+      const status = normalized.message === "invalid JSON body" ? 400 : 500
+      return jsonResponse(
+        { error: normalized.message },
+        status,
+        {
+          "Access-Control-Allow-Origin": "*",
+        },
+      )
     }
-    return staticResponse(request, projectConfig)
   },
 })
 

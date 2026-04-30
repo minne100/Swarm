@@ -5,7 +5,7 @@ function normalizeValue(value) {
 function buildReportDetail(inputHoney, outputHoney, inputFiles, syncedFiles) {
   return {
     operation: "sync attachment files into runtime state",
-    note: "Reads files from input honey payload and writes them into context state.files.",
+    note: "Reads files from input honey payload and merges them into context state.files.",
     inputHoneyType: inputHoney?.type || null,
     outputHoneyType: outputHoney?.type || null,
     changes: [
@@ -30,8 +30,8 @@ export class SyncAttachmentsBee {
 
   async execute(honey) {
     const inputFiles = honey?.payload?.files || []
-    const syncedFiles = Array.from(inputFiles)
-    this.context.syncFiles(syncedFiles)
+    this.context.syncFiles(Array.from(inputFiles))
+    const syncedFiles = Array.from(this.context.state?.files || [])
     const outputHoney = {
       type: "AttachmentsChangedHoney",
       payload: {},

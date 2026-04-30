@@ -1,0 +1,8 @@
+{
+  "name": "SubmitPromptQueuedHoney",
+  "description": "Result payload indicating async prompt request has been accepted for queueing.",
+  "payload": {
+    "accepted": "boolean",
+    "sessionID": "string"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "ApiNotHandledHoney",
+  "description": "Indicates current request is not an API route and should be handled by static server.",
+  "payload": {
+    "pathname": "string"
+  }
+}

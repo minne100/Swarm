@@ -1,0 +1,8 @@
+{
+  "name": "SubmitPromptAsyncRequestHoney",
+  "description": "Request payload used to queue an async prompt run for a session.",
+  "payload": {
+    "sessionID": "string",
+    "parts": "array"
+  }
+}

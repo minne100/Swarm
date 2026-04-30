@@ -1,0 +1,24 @@
+{
+  "name": "DispatchApiRequestDance",
+  "version": "1.0.0",
+  "description": "Dispatch backend API requests to corresponding sub-dances and handlers",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "DispatchApiRequestBee",
+      "version": "1.0.0",
+      "alias": "dispatch-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "dispatch-request",
+      "alias": "dispatch-api-request",
+      "description": "Dispatch API request and map to normalized response honey",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

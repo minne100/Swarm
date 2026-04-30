@@ -1,0 +1,24 @@
+{
+  "name": "OptionsApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle API options request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "OptionsApiRequestBee",
+      "version": "1.0.0",
+      "alias": "options-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-options",
+      "alias": "options-api-request",
+      "description": "Return standard options response",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

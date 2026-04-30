@@ -1,0 +1,24 @@
+{
+  "name": "NotFoundApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle unmatched API route",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "NotFoundApiRequestBee",
+      "version": "1.0.0",
+      "alias": "not-found-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-not-found",
+      "alias": "not-found-api-request",
+      "description": "Return API not found response",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

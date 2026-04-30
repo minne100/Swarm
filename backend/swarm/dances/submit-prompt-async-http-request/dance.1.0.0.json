@@ -1,0 +1,24 @@
+{
+  "name": "SubmitPromptAsyncHttpRequestDance",
+  "version": "1.0.0",
+  "description": "Handle submit prompt async HTTP request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "SubmitPromptAsyncHttpRequestBee",
+      "version": "1.0.0",
+      "alias": "submit-prompt-async-http-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-submit-prompt-async",
+      "alias": "submit-prompt-async-http-request",
+      "description": "Map HTTP payload to submit prompt async dance",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

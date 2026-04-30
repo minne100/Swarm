@@ -53,7 +53,7 @@ export class WaitReplyBee {
     const payload = honey?.payload || {}
     const projectId = payload.projectId
     try {
-      const reply = await this.context.waitAssistantReply(payload.sessionID, payload.sentAt)
+      const reply = await this.context.waitAssistantReply(payload.sessionID, payload.sentAt, payload.projectId)
       const outputHoney = {
         type: "PromptFlowHoney",
         payload: {

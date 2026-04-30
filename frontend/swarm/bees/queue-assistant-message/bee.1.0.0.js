@@ -31,7 +31,13 @@ export class QueueAssistantMessageBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     const reply = payload.reply || "Request accepted but no assistant text is available yet."
-    this.context.pushMessage(payload.projectId, "ai", reply)
+    const consumed =
+      typeof this.context.consumeAssistantStream === "function"
+        ? this.context.consumeAssistantStream(payload.projectId, reply)
+        : false
+    if (!consumed) {
+      this.context.pushMessage(payload.projectId, "ai", reply)
+    }
     const outputHoney = {
       type: "PromptFlowHoney",
       payload: {

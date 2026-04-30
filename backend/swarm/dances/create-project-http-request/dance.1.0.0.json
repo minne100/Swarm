@@ -1,0 +1,24 @@
+{
+  "name": "CreateProjectHttpRequestDance",
+  "version": "1.0.0",
+  "description": "Handle create project HTTP request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "CreateProjectHttpRequestBee",
+      "version": "1.0.0",
+      "alias": "create-project-http-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-create-project",
+      "alias": "create-project-http-request",
+      "description": "Map HTTP payload to create project dance",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

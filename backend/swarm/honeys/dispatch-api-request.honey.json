@@ -1,0 +1,9 @@
+{
+  "name": "DispatchApiRequestHoney",
+  "description": "Normalized backend HTTP request envelope for API dispatch.",
+  "payload": {
+    "method": "string",
+    "url": "string",
+    "bodyText": "string"
+  }
+}

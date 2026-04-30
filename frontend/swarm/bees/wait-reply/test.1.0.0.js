@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { waitReplyBee } from "./bee.1.0.0.js"
 
 test("wait-reply bee success contract", async () => {
+  const calls = []
   const context = {
   resolveWithReport(_beeName, _summary, resultHoney) {
     return Promise.resolve({
@@ -15,7 +16,8 @@ test("wait-reply bee success contract", async () => {
       reportHoney: { type: "BeeReportHoney", payload: {} },
     })
   },
-    async waitAssistantReply() {
+    async waitAssistantReply(sessionID, sentAt, projectId) {
+      calls.push({ sessionID, sentAt, projectId })
       return "ok"
     },
   }
@@ -27,4 +29,5 @@ test("wait-reply bee success contract", async () => {
   expect(output.resultHoney.type).toBe("PromptFlowHoney")
   expect(output.resultHoney.payload.reply).toBe("ok")
   expect(output.reportHoney.type).toBe("BeeReportHoney")
+  expect(calls[0].projectId).toBe("p1")
 })

@@ -1017,15 +1017,44 @@ function createdAt(msg) {
   return 0
 }
 
-function findAssistantReply(messages, since) {
+function isStreamDone(msg) {
+  if (typeof msg?.info?.stream?.done === "boolean") return msg.info.stream.done
+  return true
+}
+
+function findAssistantReplyState(messages, since) {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const msg = messages[i]
     if (roleOf(msg) !== "assistant") continue
     if (createdAt(msg) < since) continue
     const text = textFromMessage(msg)
-    if (text) return text
+    if (!text && !isStreamDone(msg)) return { reply: "", done: false }
+    if (text) return { reply: text, done: isStreamDone(msg) }
+    if (isStreamDone(msg)) return { reply: "", done: true }
   }
-  return ""
+  return { reply: "", done: false }
+}
+
+function fileIdentity(file) {
+  if (typeof file === "string") return `path:${file}`
+  if (!file || typeof file !== "object") return ""
+  const name = typeof file.name === "string" ? file.name : ""
+  const size = typeof file.size === "number" ? String(file.size) : ""
+  const type = typeof file.type === "string" ? file.type : ""
+  const lastModified = typeof file.lastModified === "number" ? String(file.lastModified) : ""
+  return `file:${name}|${size}|${type}|${lastModified}`
+}
+
+function mergeAttachmentFiles(existingFiles, incomingFiles) {
+  const all = [...(Array.isArray(existingFiles) ? existingFiles : []), ...(Array.isArray(incomingFiles) ? incomingFiles : [])]
+  const seen = new Set()
+  return all.filter((file) => {
+    const key = fileIdentity(file)
+    if (!key) return false
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function buildBeeReportHoney(beeName, status, summary, detail = {}) {
@@ -1096,9 +1125,9 @@ function ensureBeeContract(descriptor, instance) {
     return instance
   }
   const rawExecute = instance.execute.bind(instance)
-  instance.execute = (honey) =>
+  instance.execute = (honey, beeRuntimeContext) =>
     Promise.resolve()
-      .then(() => rawExecute(honey))
+      .then(() => rawExecute(honey, beeRuntimeContext))
       .then((output) => toBeeSuccessContract(descriptor.name, output))
       .catch((error) => Promise.reject(toBeeFailureContract(descriptor.name, error)))
   return instance
@@ -1156,6 +1185,9 @@ function createBrowserElements(projectConfig, rootDocument = document) {
 
 function createBrowserProjectContext(projectConfig, elements, options = {}) {
   const state = cloneValue(projectConfig.initialState)
+  if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
+    state.streamingAssistantByProject = {}
+  }
   const apiBase = options.apiBase || projectConfig?.api?.base || "http://127.0.0.1:3000"
   const pollIntervalMs =
     Number.isInteger(options.pollIntervalMs) ? options.pollIntervalMs : projectConfig?.api?.pollIntervalMs ?? 1200
@@ -1174,6 +1206,44 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
     pushMessage(projectId, role, content) {
       context.ensureProjectMessages(projectId)
       state.messages[projectId].push({ role, content })
+    },
+    updateAssistantStream(projectId, content, done = false) {
+      context.ensureProjectMessages(projectId)
+      const mappedIndex = state.streamingAssistantByProject[projectId]
+      const hasMappedIndex = Number.isInteger(mappedIndex) && mappedIndex >= 0
+      const list = state.messages[projectId]
+      const targetIndex = hasMappedIndex ? mappedIndex : list.length
+      if (!hasMappedIndex) {
+        list.push({ role: "ai", content: "", streaming: true })
+        state.streamingAssistantByProject[projectId] = list.length - 1
+      }
+      const safeIndex = Number.isInteger(state.streamingAssistantByProject[projectId])
+        ? state.streamingAssistantByProject[projectId]
+        : targetIndex
+      const target = list[safeIndex]
+      if (!target) return
+      target.role = "ai"
+      target.content = typeof content === "string" ? content : ""
+      target.streaming = !done
+      if (done) {
+        delete state.streamingAssistantByProject[projectId]
+      }
+    },
+    consumeAssistantStream(projectId, reply) {
+      if (!projectId) return false
+      const mappedIndex = state.streamingAssistantByProject[projectId]
+      if (!Number.isInteger(mappedIndex) || mappedIndex < 0) return false
+      const list = state.messages[projectId] || []
+      const target = list[mappedIndex]
+      if (!target) {
+        delete state.streamingAssistantByProject[projectId]
+        return false
+      }
+      target.role = "ai"
+      target.content = typeof reply === "string" ? reply : ""
+      target.streaming = false
+      delete state.streamingAssistantByProject[projectId]
+      return true
     },
     renderProjectList() {
       elements.projectListEl.innerHTML = ""
@@ -1215,7 +1285,7 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
       })
     },
     syncFiles(files) {
-      state.files = Array.from(files || [])
+      state.files = mergeAttachmentFiles(state.files, Array.from(files || []))
     },
     clearComposer() {
       elements.promptEl.value = ""
@@ -1268,14 +1338,29 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
         body: JSON.stringify({ parts }),
       })
     },
-    async waitAssistantReply(sessionID, since) {
+    async waitAssistantReply(sessionID, since, projectId) {
       const deadline = Date.now() + pollTimeoutMs
       while (Date.now() < deadline) {
         const payload = await context.request(`/session/${sessionID}/message?limit=80`)
         const messages = listFromMessagesPayload(payload)
-        const hit = findAssistantReply(messages, since)
-        if (hit) return hit
+        const hit = findAssistantReplyState(messages, since)
+        if (projectId && hit.reply) {
+          context.updateAssistantStream(projectId, hit.reply, hit.done)
+          context.renderMessages()
+        }
+        if (hit.done && hit.reply) return hit.reply
         await sleep(pollIntervalMs)
+      }
+      if (projectId) {
+        const mappedIndex = state.streamingAssistantByProject[projectId]
+        if (Number.isInteger(mappedIndex) && mappedIndex >= 0) {
+          const message = state.messages[projectId]?.[mappedIndex]
+          if (message?.content) {
+            context.consumeAssistantStream(projectId, message.content)
+            context.renderMessages()
+            return message.content
+          }
+        }
       }
       return ""
     },
@@ -1283,13 +1368,29 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
   return context
 }
 
+function requestProjectName(context) {
+  const suggested = `Project ${context.state.projects.length + 1}`
+  if (typeof globalThis.prompt !== "function") return suggested
+  while (true) {
+    const raw = globalThis.prompt("请输入项目名", suggested)
+    if (raw === null) return null
+    const value = raw.trim()
+    if (value) return value
+    if (typeof globalThis.alert === "function") {
+      globalThis.alert("项目名不能为空")
+    }
+  }
+}
+
 function bindBrowserProjectHandlers(projectConfig, context, startDance) {
   const elements = context.elements
   context.startDance = startDance
   elements.addProjectBtn.addEventListener("click", () => {
+    const name = requestProjectName(context)
+    if (!name) return
     startDance(projectConfig.ui.dances.addProject, {
       type: projectConfig.ui.honeyTypes.addProject,
-      payload: {},
+      payload: { name },
     })
   })
   elements.attachBtnEl.addEventListener("click", () => {
@@ -1302,6 +1403,7 @@ function bindBrowserProjectHandlers(projectConfig, context, startDance) {
         files: Array.from(elements.fileInputEl.files || []),
       },
     })
+    elements.fileInputEl.value = ""
   })
   elements.composerEl.addEventListener("submit", (event) => {
     event.preventDefault()
@@ -1322,6 +1424,9 @@ function bindBrowserProjectHandlers(projectConfig, context, startDance) {
 
 function createBunProjectContext(projectConfig, options = {}) {
   const state = cloneValue(projectConfig.initialState)
+  if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
+    state.streamingAssistantByProject = {}
+  }
   const apiBase = options.apiBase || projectConfig?.api?.base || "http://127.0.0.1:3000"
   const helpers = createContractHelpers()
   return {
@@ -1335,11 +1440,40 @@ function createBunProjectContext(projectConfig, options = {}) {
       if (!state.messages[projectId]) state.messages[projectId] = []
       state.messages[projectId].push({ role, content })
     },
+    updateAssistantStream(projectId, content, done = false) {
+      if (!state.messages[projectId]) state.messages[projectId] = []
+      const mappedIndex = state.streamingAssistantByProject[projectId]
+      const hasMappedIndex = Number.isInteger(mappedIndex) && mappedIndex >= 0
+      if (!hasMappedIndex) {
+        state.messages[projectId].push({ role: "ai", content: "", streaming: true })
+        state.streamingAssistantByProject[projectId] = state.messages[projectId].length - 1
+      }
+      const target = state.messages[projectId][state.streamingAssistantByProject[projectId]]
+      if (!target) return
+      target.role = "ai"
+      target.content = typeof content === "string" ? content : ""
+      target.streaming = !done
+      if (done) delete state.streamingAssistantByProject[projectId]
+    },
+    consumeAssistantStream(projectId, reply) {
+      const mappedIndex = state.streamingAssistantByProject[projectId]
+      if (!Number.isInteger(mappedIndex) || mappedIndex < 0) return false
+      const target = state.messages[projectId]?.[mappedIndex]
+      if (!target) {
+        delete state.streamingAssistantByProject[projectId]
+        return false
+      }
+      target.role = "ai"
+      target.content = typeof reply === "string" ? reply : ""
+      target.streaming = false
+      delete state.streamingAssistantByProject[projectId]
+      return true
+    },
     renderProjectList() {},
     renderMessages() {},
     renderAttachments() {},
     syncFiles(files) {
-      state.files = Array.from(files || [])
+      state.files = mergeAttachmentFiles(state.files, Array.from(files || []))
     },
     clearComposer() {
       state.files = []
