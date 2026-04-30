@@ -21,7 +21,8 @@ Swarm Paradigm 不是“让 AI 聊天更聪明”，而是“让 AI 像工程系
 - **Dance（蜂舞）**：蜜蜂通过舞蹈传递方向和任务信号，对应流程编排与协作协议
 - **Hive（蜂房）**：蜂群的组织与治理中心，对应执行环境与任务治理
 - **Swarm（蜂群）**：整体协同而非单体智能，对应多 Agent 分工协作系统
-- **Beekeeping（养蜂）**：养蜂人不生产蜜蜂不采蜜，只做观察与引导，对应“人类只审核与纠偏，不直接写 Bee/Honey/Dance”
+- **QueenBee（蜂王）**：是一个特殊的 System Bee，负责管理 Dance 实例的生命周期：创建、销毁、终止、查询。它的命名源于蜂群隐喻——蜂后不直接采蜜，但指挥整个蜂群。
+- **Beekeeping（养蜂）**：养蜂人不生产蜜蜂也不采蜜，只做观察与引导，对应“人类只审核与纠偏，不直接写 Bee/Honey/Dance”
 
 这套命名强调一个核心理念：**复杂目标不是由“一个超级 Agent”完成，而是由可组合、可治理、可审计的协同群体完成。**
 
@@ -125,7 +126,19 @@ Dance 规定的是 **Bee 类型的拓扑顺序**，而不指定具体实例。
 - webUI
 - 部署时将所有的Honey和Dance转换成js代码，和用到的Bee一起打包压缩成一个单独的js文件，做到运行性能零损失
 
-### 6. BeeHub（能力市场）
+### 6. QueenBee（蜂后）
+
+QueenBee 的职责包括：
+- 根据 `multiplicity` 声明为父 Dance 动态创建多个子 Dance 实例。
+- 发送 `__Terminate__` 信号终止指定的 Dance 实例。
+- 查询正在运行的 Dance 实例状态。
+- 在测试模式下与 Mock Bee 协作，记录执行轨迹。
+
+QueenBee 本身遵循 Bee 接口规范，其 `execute` 接收 `ManageDanceHoney`，执行管理操作并返回结果。它仅对 Hive 内部和授权 Dance 开放，不暴露给普通 Bee。
+
+> **设计意图**：QueenBee 将实例管理逻辑集中化，避免 Dance 直接操作 Hive 内部 API，保持清晰的职责边界。
+
+### 7. BeeHub（能力市场）
 
 - 共享可复用 Bee
 - 检索现成能力
@@ -438,6 +451,72 @@ Audit Checklist
 
 ---
 
+## Dance 测试与生命周期管理
+
+### 1. Dance 的自动化测试
+
+Dance 的逻辑错误比单个 Bee 的错误更隐蔽，必须引入自动化测试。核心方法：
+
+- **契约测试 + Mock Bee**：测试时使用 Mock Bee 替代真实 Bee，Mock Bee 严格遵循 Honey Schema，行为可预测。
+- **场景定义**：每个 Dance 必须附带一个 `{DanceName}.test.dance.json` 文件，包含多个测试场景（输入 Honey 序列、Mock 响应、期望的执行轨迹）。
+- **轨迹断言**：Hive 在测试模式下记录步骤序列、子 Dance 创建/销毁事件、输出 Honey 等，与期望轨迹比对。
+- **性质测试**：定义不变量（如“步骤 A 成功后最终一定执行 B 或 C”），随机生成输入验证是否违反。
+- **变异测试**：对 Dance 定义做微小改动（如改错跳转目标），检查测试是否能捕获错误。
+- **金样本回归**：人类审核通过的真实执行实例保存为 Golden Trace，每次修改后必须重新通过。
+
+测试套件同样进入版本管理和评分，作为 Beekeeping 的审核对象。
+
+### 2. Dance 实例的生命周期管理
+
+传统的“所有步骤执行完就退出”不适用于异步长流程（如 WebSocket 连接、UI 列表项）。我们引入以下机制：
+
+- **自然结束**：最后一步无 `onSuccess` 指向时，Dance 实例正常结束。
+- **显式终止**：内置系统 Honey `__Terminate__`。任何 Dance 步骤可设置 `triggeredBy: "__Terminate__"` 来响应终止信号，执行清理后自然结束。父 Dance 可通过 QueenBee 向子实例发送 `__Terminate__`。
+- **超时终止**：Dance 顶层可设置 `timeout`，超时后 Hive 自动注入 `__Terminate__`。
+- **级联终止**：父 Dance 结束时，默认自动终止所有由它创建的子 Dance 实例（可通过 `cascadeTermination: false` 禁用）。
+
+### 3. 动态子 Dance 实例（`multiplicity`）
+
+在 Dance 的步骤中支持 `foreach` 风格的动态实例化：
+
+```json
+{
+  "id": "spawn-items",
+  "alias": "item-dance",
+  "multiplicity": {
+    "source": "$.items",
+    "instanceIdTemplate": "item-${item.id}",
+    "inputTemplate": { "type": "ItemInitHoney", "payload": { "id": "${item.id}" } }
+  }
+}
+
+### 4. Dance 测试契约内容示例：
+
+```json
+{
+  "name": "ListRootDance.test",
+  "forDance": "ListRootDance",
+  "scenarios": [
+    {
+      "description": "初始空列表，收到3个新项应创建3个子实例",
+      "inputSequence": [
+        { "type": "ListDataHoney", "payload": { "items": [] }, "delayMs": 0 },
+        { "type": "ListDataHoney", "payload": { "items": ["A","B","C"] }, "delayMs": 100 }
+      ],
+      "mockBeeResponses": {
+        "diff": { "onSuccess": { "resultHoney": { "type": "DiffResultHoney", "payload": { "added": ["A","B","C"], "removed": [] } } } }
+      },
+      "expectedTrace": {
+        "stepIds": ["compute-diff", "spawn-items", "wait-updates"],
+        "subDanceInstanceCreations": [
+          { "danceName": "ListItemDance", "instanceId": "item-A", "input": { "type": "ItemInitHoney", "payload": { "id": "A" } } },
+          { "danceName": "ListItemDance", "instanceId": "item-B", ... },
+          { "danceName": "ListItemDance", "instanceId": "item-C", ... }
+        ]
+      }
+    }
+  ]
+}
 
 ## 使用 **记忆宫殿 + 知识图谱** 用来影响决策路径。
 

@@ -61,8 +61,14 @@ Dance 是 AI 生成的 JSON 文件，描述一次完整业务流程的拓扑。
 | `onFail` | string | 条件必须* | 当 Bee/子 Dance 的 Promise reject 时跳转的步骤 ID。要求同 `onSuccess`。 |
 | `fork` | string | 否 | 如果存在，Hive 启动当前 Bee/子 Dance 后**立即**跳转到此 ID 对应的步骤，不等待 Promise 完成。当 Promise 最终 resolve/reject 时，再根据 `onSuccess`/`onFail` 跳转（异步结果处理）。 |
 | `update` | boolean | 否 | 是否对该步骤的 Bee 启用 `update` 调用。仅对实现了 `update` 方法的 Bee 有效，Hive 会在每帧调用。 |
+| `multiplicity` | {} | 否 | 动态实例化子 Dance 的配置。存在时表示本步骤会创建多个子 Dance 实例，每个实例对应 `source` 数组中的一个元素。 |
+| `multiplicity.source` | string | 必须 | JSONPath 表达式，从当前 Honey 中取出数组。 |
+| `multiplicity.instanceIdTemplate` | string | 必须 | 实例 ID 模板，可使用 `${item.field}` 引用当前元素。 |
+| `multiplicity.parallel` | boolean | 否 | 是否并发创建，默认 true。 |
+| `multiplicity.inputTemplate` | string | 必须 |每个子 Dance 的初始输入 Honey，支持模板变量。 |
 | `timeout` | number | 否 | 步骤级超时毫秒数。若设置，将覆盖 Dance 全局 `timeout` 对本步骤的约束。超时后强制触发 `onFail`，并视情况终止整个 Dance。 |
 | `log` | string | 否 | 日志策略：`"none"`（默认，忽略）、`"console"`（输出到控制台）、`"file"`（写入文件，目标由 Hive 配置）。 |
+
 
 **跳转规则：**
 1. **有 `fork`**：调用 Bee/子 Dance 后立即跳转到 `fork` 指向的步骤；主流程继续执行，不等待 Promise。当 Bee/子 Dance 的 Promise 完成时，Hive 根据 `onSuccess`/`onFail` 再次跳转（此时可能跳转到等待收集结果的步骤或结束）。  
@@ -81,6 +87,30 @@ Dance 是 AI 生成的 JSON 文件，描述一次完整业务流程的拓扑。
 
 ---
 
+##  内置系统 Honey：__Terminate__
+类型为 __Terminate__ 的 Honey 用于显式终止 Dance 实例。任何步骤可通过 triggeredBy: "__Terminate__" 捕获该信号，执行清理后自然结束。
+
+Hive 保证：
+
+__Terminate__ 优先级高于普通 triggeredBy Honey。
+
+收到后，当前步骤的 onSuccess 或 onFail 会立即触发（取决于该步骤定义）。
+
+若步骤没有处理 __Terminate__，Hive 会跳过该步骤，直接进入 Dance 的终止流程（记录未处理警告，然后销毁实例）。
+
+## QueenBee 接口（System Bee）
+QueenBee 是一个预置的 System Bee，所有 Dance 可通过别名 queen-bee 调用。它的输入 Honey 类型为 ManageDanceHoney，包含以下操作：
+
+"action": "create"：根据 Dance 名称和输入 Honey 创建新实例。
+
+"action": "terminate"：终止指定实例 ID 的 Dance 实例（发送 __Terminate__）。
+
+"action": "list"：列出当前所有活跃实例（用于调试）。
+
+QueenBee 的返回 Honey 类型为 ManageDanceResultHoney。
+
+普通 Bee 不得调用 QueenBee，只有 Dance 步骤中的 alias 可以引用它（需显式声明在 bees 列表中）。
+
 ## 补充说明
 
 1. **类型契约**：若 Dance 顶层声明了 `output`，则最后一个步骤的 `output` 必须与其一致。若步骤的 `input` 与上一步的 `output` 不一致，Hive 应记录警告并视情况拒绝执行。
@@ -89,7 +119,6 @@ Dance 是 AI 生成的 JSON 文件，描述一次完整业务流程的拓扑。
 4. **定时与实例**：`schedule` 只负责**创建新 Dance 实例**，不影响当前实例。每次定时触发都会启动一个全新的执行，彼此独立。
 5. **环境信息传递**：`taskId`、日志器等运行时上下文由 Hive 在调用 Bee 的 `execute` 时通过 Honey 传入（首次调用可夹带），无需特殊接口。
 
----
 Dance示例
 
 ```json
