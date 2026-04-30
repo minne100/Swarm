@@ -1,0 +1,30 @@
+{
+    "name":  "AddProjectHoney",
+    "version":  "1.0.0",
+    "description":  "触发创建项目",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "AddProjectHoney"
+                                               },
+                                      "payload":  {
+                                                      "type":  "object",
+                                                      "additionalProperties":  true
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "AddProjectHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

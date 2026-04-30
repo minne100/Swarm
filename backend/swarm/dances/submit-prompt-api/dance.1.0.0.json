@@ -1,0 +1,63 @@
+{
+  "name": "SubmitPromptApiDance",
+  "version": "1.0.0",
+  "description": "Queue user prompt, call LLM, and persist assistant reply",
+  "input": "SubmitPromptRequestHoney",
+  "bees": [
+    {
+      "name": "QueueUserMessageApiBee",
+      "version": "1.0.0",
+      "alias": "queue-user-message-api"
+    },
+    {
+      "name": "CallLlmApiBee",
+      "version": "1.0.0",
+      "alias": "call-llm-api"
+    },
+    {
+      "name": "QueueAssistantMessageApiBee",
+      "version": "1.0.0",
+      "alias": "queue-assistant-message-api"
+    },
+    {
+      "name": "QueueAssistantErrorApiBee",
+      "version": "1.0.0",
+      "alias": "queue-assistant-error-api"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "queue-user-message",
+      "alias": "queue-user-message-api",
+      "description": "Persist user message into session history",
+      "input": "SubmitPromptRequestHoney",
+      "output": "PromptTaskHoney",
+      "onSuccess": "call-llm",
+      "onFail": "queue-assistant-error"
+    },
+    {
+      "id": "call-llm",
+      "alias": "call-llm-api",
+      "description": "Call LLM provider with current session context",
+      "input": "PromptTaskHoney",
+      "output": "PromptTaskHoney",
+      "onSuccess": "queue-assistant-message",
+      "onFail": "queue-assistant-error"
+    },
+    {
+      "id": "queue-assistant-message",
+      "alias": "queue-assistant-message-api",
+      "description": "Persist assistant message and return final payload",
+      "input": "PromptTaskHoney",
+      "output": "PromptResultHoney"
+    },
+    {
+      "id": "queue-assistant-error",
+      "alias": "queue-assistant-error-api",
+      "description": "Persist readable error message for frontend polling",
+      "input": "ApiErrorHoney",
+      "output": "ApiErrorHoney"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+    "name":  "PromptFlowHoney",
+    "version":  "1.0.0",
+    "description":  "提交流程中的中间状态",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "PromptFlowHoney"
+                                               },
+                                      "payload":  {
+                                                      "type":  "object",
+                                                      "additionalProperties":  true
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "PromptFlowHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

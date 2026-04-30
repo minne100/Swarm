@@ -1,0 +1,30 @@
+{
+    "name":  "AttachmentsChangedHoney",
+    "version":  "1.0.0",
+    "description":  "附件状态已变更",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "AttachmentsChangedHoney"
+                                               },
+                                      "payload":  {
+                                                      "type":  "object",
+                                                      "additionalProperties":  true
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "AttachmentsChangedHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

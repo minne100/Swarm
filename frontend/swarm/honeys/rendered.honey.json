@@ -1,0 +1,30 @@
+{
+    "name":  "RenderedHoney",
+    "version":  "1.0.0",
+    "description":  "界面渲染步骤完成",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "RenderedHoney"
+                                               },
+                                      "payload":  {
+                                                      "type":  "object",
+                                                      "additionalProperties":  true
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "RenderedHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

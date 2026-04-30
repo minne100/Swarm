@@ -1,0 +1,38 @@
+{
+    "name":  "SelectProjectHoney",
+    "version":  "1.0.0",
+    "description":  "触发切换项目",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "SelectProjectHoney"
+                                               },
+                                      "payload":  {
+                                                      "additionalProperties":  true,
+                                                      "properties":  {
+                                                                         "projectId":  {
+                                                                                           "type":  "string"
+                                                                                       }
+                                                                     },
+                                                      "type":  "object",
+                                                      "required":  [
+                                                                       "projectId"
+                                                                   ]
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "SelectProjectHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

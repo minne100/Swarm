@@ -1,0 +1,24 @@
+{
+  "name": "SelectProjectDance",
+  "version": "1.0.0",
+  "description": "切换项目",
+  "input": "SelectProjectHoney",
+  "bees": [
+    { "name": "SetActiveProjectBee", "version": "1.0.0", "alias": "set-active-project" },
+    { "name": "RenderProjectListBee", "version": "1.0.0", "alias": "render-project-list" },
+    { "name": "RenderMessagesBee", "version": "1.0.0", "alias": "render-messages" }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "set-active-project",
+      "alias": "set-active-project",
+      "description": "设置激活项目",
+      "input": "SelectProjectHoney",
+      "onSuccess": "render-project-list",
+      "onFail": "render-project-list"
+    },
+    { "id": "render-project-list", "alias": "render-project-list", "description": "渲染项目", "onSuccess": "render-messages", "onFail": "render-messages" },
+    { "id": "render-messages", "alias": "render-messages", "description": "渲染消息" }
+  ]
+}

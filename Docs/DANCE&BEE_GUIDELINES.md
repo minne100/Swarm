@@ -44,6 +44,7 @@ Dance 是 AI 生成的 JSON 文件，描述一次完整业务流程的拓扑。
 | `retry` | {} | 否 | 重试策略。 |
 | `retry.maxRetries` | number | 是（存在 `retry` 时） | 最大重试次数。 |
 | `retry.step` | string | 否 | 从哪个步骤 ID 开始重试，默认为第一个步骤。 |
+| `needLog` | boolean | 否 | 默认true，如果为flase，则这个Dance中所有Step的Log都不输出 |
 
 ### `steps[]` 步骤结构
 
@@ -67,7 +68,7 @@ Dance 是 AI 生成的 JSON 文件，描述一次完整业务流程的拓扑。
 | `multiplicity.parallel` | boolean | 否 | 是否并发创建，默认 true。 |
 | `multiplicity.inputTemplate` | string | 必须 |每个子 Dance 的初始输入 Honey，支持模板变量。 |
 | `timeout` | number | 否 | 步骤级超时毫秒数。若设置，将覆盖 Dance 全局 `timeout` 对本步骤的约束。超时后强制触发 `onFail`，并视情况终止整个 Dance。 |
-| `log` | string | 否 | 日志策略：`"none"`（默认，忽略）、`"console"`（输出到控制台）、`"file"`（写入文件，目标由 Hive 配置）。 |
+| `log` | string | 否 | 日志策略：`"none"`（忽略）、`"console"`（默认，输出到控制台）、`"file"`（写入文件，目标由 Hive 配置）。 |
 
 
 **跳转规则：**

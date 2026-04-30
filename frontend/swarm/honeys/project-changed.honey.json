@@ -1,0 +1,38 @@
+{
+    "name":  "ProjectChangedHoney",
+    "version":  "1.0.0",
+    "description":  "项目状态已变更",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "ProjectChangedHoney"
+                                               },
+                                      "payload":  {
+                                                      "additionalProperties":  true,
+                                                      "properties":  {
+                                                                         "projectId":  {
+                                                                                           "type":  "string"
+                                                                                       }
+                                                                     },
+                                                      "type":  "object",
+                                                      "required":  [
+                                                                       "projectId"
+                                                                   ]
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "ProjectChangedHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

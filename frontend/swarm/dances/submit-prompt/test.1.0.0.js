@@ -1,0 +1,20 @@
+import { expect, test } from "bun:test"
+
+test("submit-prompt dance definition contract", async () => {
+  const dance = await Bun.file(`${import.meta.dir}/dance.1.0.0.json`).json()
+  expect(typeof dance.name).toBe("string")
+  expect(typeof dance.version).toBe("string")
+  expect(typeof dance.description).toBe("string")
+  expect(Array.isArray(dance.bees)).toBe(true)
+  expect(Array.isArray(dance.dances)).toBe(true)
+  expect(Array.isArray(dance.steps)).toBe(true)
+  expect(dance.bees.length > 0).toBe(true)
+  expect(dance.steps.length > 0).toBe(true)
+  dance.steps.forEach((step) => {
+    expect(typeof step.id).toBe("string")
+    expect(typeof step.alias).toBe("string")
+    expect(typeof step.description).toBe("string")
+  })
+  expect(dance.name).toBe("SubmitPromptDance")
+  expect(dance.input).toBe("SubmitPromptHoney")
+})

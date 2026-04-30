@@ -1,0 +1,22 @@
+{
+  "name": "AttachmentUpdateDance",
+  "version": "1.0.0",
+  "description": "更新附件区",
+  "input": "UpdateAttachmentsHoney",
+  "bees": [
+    { "name": "SyncAttachmentsBee", "version": "1.0.0", "alias": "sync-attachments" },
+    { "name": "RenderAttachmentsBee", "version": "1.0.0", "alias": "render-attachments" }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "sync-attachments",
+      "alias": "sync-attachments",
+      "description": "同步附件",
+      "input": "UpdateAttachmentsHoney",
+      "onSuccess": "render-attachments",
+      "onFail": "render-attachments"
+    },
+    { "id": "render-attachments", "alias": "render-attachments", "description": "渲染附件" }
+  ]
+}

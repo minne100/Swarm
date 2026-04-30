@@ -1,0 +1,24 @@
+{
+  "name": "CreateProjectApiDance",
+  "version": "1.0.0",
+  "description": "Create a project for frontend",
+  "input": "CreateProjectRequestHoney",
+  "output": "ProjectCreatedHoney",
+  "bees": [
+    {
+      "name": "CreateProjectApiBee",
+      "version": "1.0.0",
+      "alias": "create-project-api"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "create-project",
+      "alias": "create-project-api",
+      "description": "Create project and return payload",
+      "input": "CreateProjectRequestHoney",
+      "output": "ProjectCreatedHoney"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+    "name":  "UpdateAttachmentsHoney",
+    "version":  "1.0.0",
+    "description":  "同步附件列表",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "UpdateAttachmentsHoney"
+                                               },
+                                      "payload":  {
+                                                      "additionalProperties":  true,
+                                                      "properties":  {
+                                                                         "files":  {
+                                                                                       "type":  "array"
+                                                                                   }
+                                                                     },
+                                                      "type":  "object"
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "UpdateAttachmentsHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

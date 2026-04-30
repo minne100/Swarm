@@ -1,0 +1,61 @@
+function normalizeValue(value) {
+  return value === undefined ? null : value
+}
+
+function buildSuccessDetail(inputHoney, outputHoney, detail, projectId) {
+  return {
+    operation: "queue prompt error as assistant-visible message",
+    note: "Pushes readable error guidance to messages and converts flow to PromptFlowHoney for rendering steps.",
+    inputHoneyType: inputHoney?.type || null,
+    outputHoneyType: outputHoney?.type || null,
+    changes: [
+      {
+        path: "$.type",
+        before: normalizeValue(inputHoney?.type),
+        after: outputHoney.type,
+      },
+      {
+        path: "$.payload.projectId",
+        before: normalizeValue(inputHoney?.payload?.projectId),
+        after: normalizeValue(projectId),
+      },
+      {
+        path: "$.payload.detail",
+        before: normalizeValue(inputHoney?.payload?.detail),
+        after: normalizeValue(detail),
+      },
+    ],
+  }
+}
+
+export class QueuePromptErrorBee {
+  constructor(context) {
+    this.context = context
+  }
+
+  async execute(honey) {
+    const projectId = honey?.payload?.projectId || this.context.state.activeProjectId
+    const detail = honey?.payload?.detail || "unknown error"
+    this.context.pushMessage(
+      projectId,
+      "ai",
+      `Backend request failed.\nPlease ensure backend is running on port 3000 and LLM API config is valid.\n\nDetail: ${detail}`,
+    )
+    const outputHoney = {
+      type: "PromptFlowHoney",
+      payload: { projectId },
+    }
+    return this.context.resolveWithReport(
+      "QueuePromptErrorBee",
+      "error message queued",
+      outputHoney,
+      buildSuccessDetail(honey, outputHoney, detail, projectId),
+    )
+  }
+
+  destroy() {}
+}
+
+export function queuePromptErrorBee(context) {
+  return new QueuePromptErrorBee(context)
+}

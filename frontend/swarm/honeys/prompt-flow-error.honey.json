@@ -1,0 +1,42 @@
+{
+    "name":  "PromptFlowErrorHoney",
+    "version":  "1.0.0",
+    "description":  "提交流程中的错误状态",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "PromptFlowErrorHoney"
+                                               },
+                                      "payload":  {
+                                                      "additionalProperties":  true,
+                                                      "properties":  {
+                                                                         "projectId":  {
+                                                                                           "type":  "string"
+                                                                                       },
+                                                                         "detail":  {
+                                                                                        "type":  "string"
+                                                                                    }
+                                                                     },
+                                                      "type":  "object",
+                                                      "required":  [
+                                                                       "projectId",
+                                                                       "detail"
+                                                                   ]
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "PromptFlowErrorHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

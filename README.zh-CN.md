@@ -10,8 +10,6 @@ Swarm Paradigm 不是“让 AI 聊天更聪明”，而是“让 AI 像工程系
 
 它通过 Bee / Honey / Dance / Hive 的分层抽象，把复杂业务流程拆成可管理的最小单元，并在人类审核下完成端到端执行，原则上用户不需要看到任何代码，就能得到需要的软件产品。
 
-本项目基于opencode开源项目构建底座。
-
 ## 为什么叫“蜜蜂 / 蜂群”
 
 这个命名不是营销包装，而是系统设计隐喻：
@@ -1071,12 +1069,10 @@ MVP 4：验证“Swarm 能否处理复杂协作系统”
 
 ## 开源依赖
 
-- opencode：https://github.com/anomalyco/opencode
 - MemPalace：https://github.com/MemPalace/mempalace
 - graphify：https://github.com/safishamsi/graphify
 - gbrain（参考）：https://github.com/garrytan/gbrain
 - gstack（参考）：https://github.com/garrytan/gstack
-- 安装说明：[Docs/INSTALLATION.md](./Docs/INSTALLATION.md)
 
 
 ## License

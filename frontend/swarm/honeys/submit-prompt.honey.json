@@ -1,0 +1,44 @@
+{
+    "name":  "SubmitPromptHoney",
+    "version":  "1.0.0",
+    "description":  "提交消息入口",
+    "schema":  {
+                   "type":  "object",
+                   "required":  [
+                                    "type",
+                                    "payload"
+                                ],
+                   "properties":  {
+                                      "type":  {
+                                                   "const":  "SubmitPromptHoney"
+                                               },
+                                      "payload":  {
+                                                      "additionalProperties":  true,
+                                                      "properties":  {
+                                                                         "files":  {
+                                                                                       "type":  "array"
+                                                                                   },
+                                                                         "text":  {
+                                                                                      "type":  "string"
+                                                                                  },
+                                                                         "projectId":  {
+                                                                                           "type":  "string"
+                                                                                       }
+                                                                     },
+                                                      "type":  "object",
+                                                      "required":  [
+                                                                       "projectId"
+                                                                   ]
+                                                  }
+                                  },
+                   "additionalProperties":  false
+               },
+    "examples":  [
+                     {
+                         "type":  "SubmitPromptHoney",
+                         "payload":  {
+
+                                     }
+                     }
+                 ]
+}

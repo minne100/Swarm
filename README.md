@@ -10,8 +10,6 @@ Swarm Paradigm is not about making AI chat smarter. It is about making AI delive
 
 Through layered abstractions of Bee / Honey / Dance / Hive, it breaks complex business workflows into manageable minimal units and executes them end-to-end under human review. In principle, users should be able to get the software they need without seeing any code.
 
-This project is built on top of the open-source `opencode` project.
-
 ## Why "Bee / Swarm"
 
 This naming is not marketing. It is a system design metaphor:
@@ -1083,12 +1081,10 @@ MVP 4: Validate "Can Swarm handle complex collaborative systems"
 
 ## Open-Source Dependencies
 
-- opencode: https://github.com/anomalyco/opencode
 - MemPalace: https://github.com/MemPalace/mempalace
 - graphify: https://github.com/safishamsi/graphify
 - gbrain (reference): https://github.com/garrytan/gbrain
 - gstack (reference): https://github.com/garrytan/gstack
-- Installation: [Docs/INSTALLATION.md](./Docs/INSTALLATION.md)
 
 ## License
 

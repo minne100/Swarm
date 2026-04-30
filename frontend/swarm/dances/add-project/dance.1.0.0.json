@@ -1,0 +1,24 @@
+{
+  "name": "AddProjectDance",
+  "version": "1.0.0",
+  "description": "创建项目",
+  "input": "AddProjectHoney",
+  "bees": [
+    { "name": "CreateProjectBee", "version": "1.0.0", "alias": "create-project" },
+    { "name": "RenderProjectListBee", "version": "1.0.0", "alias": "render-project-list" },
+    { "name": "RenderMessagesBee", "version": "1.0.0", "alias": "render-messages" }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "create-project",
+      "alias": "create-project",
+      "description": "创建项目",
+      "input": "AddProjectHoney",
+      "onSuccess": "render-project-list",
+      "onFail": "render-project-list"
+    },
+    { "id": "render-project-list", "alias": "render-project-list", "description": "渲染项目", "onSuccess": "render-messages", "onFail": "render-messages" },
+    { "id": "render-messages", "alias": "render-messages", "description": "渲染消息" }
+  ]
+}

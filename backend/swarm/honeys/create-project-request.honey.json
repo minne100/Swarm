@@ -1,0 +1,5 @@
+{
+  "name": "CreateProjectRequestHoney",
+  "version": "1.0.0",
+  "description": "Request payload for creating a project"
+}

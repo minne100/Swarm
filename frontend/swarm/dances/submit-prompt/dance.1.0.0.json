@@ -1,0 +1,118 @@
+{
+  "name": "SubmitPromptDance",
+  "version": "1.0.0",
+  "description": "提交消息到后端并回填回复",
+  "input": "SubmitPromptHoney",
+  "bees": [
+    { "name": "QueueUserMessageBee", "version": "1.0.0", "alias": "queue-user-message" },
+    { "name": "RenderMessagesBee", "version": "1.0.0", "alias": "render-messages" },
+    { "name": "ClearComposerBee", "version": "1.0.0", "alias": "clear-composer" },
+    { "name": "RenderAttachmentsBee", "version": "1.0.0", "alias": "render-attachments" },
+    { "name": "EnsureSessionBee", "version": "1.0.0", "alias": "ensure-session" },
+    { "name": "BuildPromptPartsBee", "version": "1.0.0", "alias": "build-parts" },
+    { "name": "SendPromptBee", "version": "1.0.0", "alias": "send-prompt" },
+    { "name": "WaitReplyBee", "version": "1.0.0", "alias": "wait-reply" },
+    { "name": "QueueAssistantMessageBee", "version": "1.0.0", "alias": "queue-assistant-message" },
+    { "name": "QueuePromptErrorBee", "version": "1.0.0", "alias": "queue-error-message" }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "queue-user-message",
+      "alias": "queue-user-message",
+      "description": "写入用户消息",
+      "input": "SubmitPromptHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "render-user-message",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "render-user-message",
+      "alias": "render-messages",
+      "description": "刷新消息区（用户）",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "clear-composer",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "clear-composer",
+      "alias": "clear-composer",
+      "description": "清空输入和附件",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "render-attachments",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "render-attachments",
+      "alias": "render-attachments",
+      "description": "刷新附件区",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "ensure-session",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "ensure-session",
+      "alias": "ensure-session",
+      "description": "确保会话存在",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "build-parts",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "build-parts",
+      "alias": "build-parts",
+      "description": "构建提交 parts",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "send-prompt",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "send-prompt",
+      "alias": "send-prompt",
+      "description": "调用后端异步接口",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "wait-reply",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "wait-reply",
+      "alias": "wait-reply",
+      "description": "轮询等待回复",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "queue-assistant-message",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "queue-assistant-message",
+      "alias": "queue-assistant-message",
+      "description": "写入 AI 消息",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "render-final-messages",
+      "onFail": "queue-error-message"
+    },
+    {
+      "id": "queue-error-message",
+      "alias": "queue-error-message",
+      "description": "写入错误消息",
+      "input": "PromptFlowErrorHoney",
+      "output": "PromptFlowHoney",
+      "onSuccess": "render-final-messages",
+      "onFail": "render-final-messages"
+    },
+    {
+      "id": "render-final-messages",
+      "alias": "render-messages",
+      "description": "刷新消息区（最终）",
+      "input": "PromptFlowHoney",
+      "output": "PromptFlowHoney"
+    }
+  ]
+}

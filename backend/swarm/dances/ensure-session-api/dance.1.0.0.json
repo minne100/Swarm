@@ -1,0 +1,24 @@
+{
+  "name": "EnsureSessionApiDance",
+  "version": "1.0.0",
+  "description": "Ensure session for a project",
+  "input": "EnsureSessionRequestHoney",
+  "output": "SessionReadyHoney",
+  "bees": [
+    {
+      "name": "EnsureSessionApiBee",
+      "version": "1.0.0",
+      "alias": "ensure-session-api"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "ensure-session",
+      "alias": "ensure-session-api",
+      "description": "Ensure session and return session id",
+      "input": "EnsureSessionRequestHoney",
+      "output": "SessionReadyHoney"
+    }
+  ]
+}

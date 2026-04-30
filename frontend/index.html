@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <body>
+    <link rel="stylesheet" href="./style.css" />
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">Swarm</div>
+        <button id="add-project" class="add-project" type="button">+ 新建项目</button>
+        <div id="project-list" class="project-list"></div>
+      </aside>
+
+      <main class="main">
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <form id="composer" class="composer">
+          <div id="attachments" class="attachments"></div>
+          <textarea id="prompt" rows="3" placeholder="输入你的问题..."></textarea>
+          <div class="actions">
+            <input id="file-input" type="file" multiple hidden />
+            <button id="attach-btn" type="button" class="secondary">上传附件</button>
+            <button type="submit" class="primary">提交</button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <script type="module" src="./swarm-hive.js"></script>
+    <script type="module" src="./boot.browser.js"></script>
+  </body>
+</html>
