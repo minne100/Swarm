@@ -83,6 +83,7 @@ function resolveDanceName(config, method, pathname) {
   if (method === "POST" && pathname === "/session") return config.api.dances.ensureSessionRequest
   if (method === "POST" && /^\/session\/([^/]+)\/prompt_async$/.test(pathname)) return config.api.dances.submitPromptAsyncRequest
   if (method === "GET" && /^\/session\/([^/]+)\/message$/.test(pathname)) return config.api.dances.listMessagesRequest
+  if (method === "GET" && /^\/api\/projects\/([^/]+)\/sessions$/.test(pathname)) return config.api.dances.listProjectSessionsRequest
   return config.api.dances.notFoundRequest
 }
 

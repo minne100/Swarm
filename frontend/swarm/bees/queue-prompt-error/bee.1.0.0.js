@@ -34,12 +34,13 @@ export class QueuePromptErrorBee {
   }
 
   async execute(honey) {
+    const t = typeof this.context.t === "function" ? this.context.t : (_key, vars = {}) => String(vars.detail || "")
     const projectId = honey?.payload?.projectId || this.context.state.activeProjectId
     const detail = honey?.payload?.detail || "unknown error"
     this.context.pushMessage(
       projectId,
       "ai",
-      `Backend request failed.\nPlease ensure backend is running on port 3000 and LLM API config is valid.\n\nDetail: ${detail}`,
+      t("errors.backend_request_failed", { detail }),
     )
     const outputHoney = {
       type: "PromptFlowHoney",

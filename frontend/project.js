@@ -24,6 +24,12 @@ export const projectBeeDefinitions = [
     factoryExport: "ensureSessionBee",
   },
   {
+    name: "LoadProjectSessionsBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/load-project-sessions/bee.1.0.0.js",
+    factoryExport: "loadProjectSessionsBee",
+  },
+  {
     name: "FetchProjectsBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/fetch-projects/bee.1.0.0.js",
@@ -100,6 +106,12 @@ export const projectDanceFiles = [
 ]
 
 export const projectConfig = {
+  i18n: {
+    language:
+      typeof globalThis !== "undefined" && typeof globalThis.SWARM_LANG === "string" && globalThis.SWARM_LANG
+        ? globalThis.SWARM_LANG
+        : "zh-CN",
+  },
   bootstrap: {
     dance: "BootstrapDance",
   },

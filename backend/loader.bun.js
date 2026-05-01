@@ -27,11 +27,27 @@ async function loadDances(projectDanceFiles) {
   return Promise.all(projectDanceFiles.map((file) => Bun.file(danceFileToPath(new URL(file, import.meta.url))).json()))
 }
 
+async function loadMessages(language) {
+  const primary = Bun.file(danceFileToPath(new URL(`./languages/${language}.json`, import.meta.url)))
+  if (await primary.exists()) return primary.json()
+  const fallback = Bun.file(danceFileToPath(new URL("./languages/en-US.json", import.meta.url)))
+  if (await fallback.exists()) return fallback.json()
+  return {}
+}
+
 export async function loadBunProjectResources(options = {}) {
   await loadDotEnv(options.dotEnvPath)
   const { projectBeeDefinitions, projectConfig, projectDanceFiles } = await import("./project.js")
+  const language = projectConfig?.i18n?.language || "zh-CN"
   return {
-    projectConfig,
+    projectConfig: {
+      ...projectConfig,
+      i18n: {
+        ...(projectConfig.i18n || {}),
+        language,
+        messages: await loadMessages(language),
+      },
+    },
     beeDescriptors: await loadBeeDescriptors(projectBeeDefinitions, options.moduleLoader),
     dances: await loadDances(projectDanceFiles),
   }

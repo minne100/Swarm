@@ -1,5 +1,5 @@
 import path from "node:path"
-import { mkdirSync, readdirSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { loadBunProjectResources } from "./loader.bun.js"
 import { bootBunLoadedProject } from "./swarm-hive.js"
 
@@ -40,6 +40,20 @@ function createContractHelpers() {
 
 function createID(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`
+}
+
+function renderMessageTemplate(template, vars = {}) {
+  return String(template || "").replace(/\{\{(\w+)\}\}/g, (_match, key) =>
+    vars[key] === undefined || vars[key] === null ? "" : String(vars[key]),
+  )
+}
+
+function createTranslator(messages = {}) {
+  return (key, vars = {}) => {
+    const template = messages[key]
+    if (typeof template !== "string") return key
+    return renderMessageTemplate(template, vars)
+  }
 }
 
 function textPart(text) {
@@ -94,6 +108,7 @@ function ensureProjectDirectory(projectsRoot, projectName) {
     throw new Error(`invalid project name: ${projectName}`)
   }
   mkdirSync(target, { recursive: true })
+  mkdirSync(path.resolve(target, "sessions"), { recursive: true })
   return target
 }
 
@@ -105,6 +120,7 @@ function createBackendContext(projectConfig) {
   if (!state.sessions || typeof state.sessions !== "object") state.sessions = {}
   if (!state.sessionByProject || typeof state.sessionByProject !== "object") state.sessionByProject = {}
   const helpers = createContractHelpers()
+  const t = createTranslator(projectConfig?.i18n?.messages || {})
   function projectsFromDirectory() {
     const entries = readdirSync(projectsRoot, { withFileTypes: true })
     const projects = entries
@@ -118,12 +134,132 @@ function createBackendContext(projectConfig) {
     state.projects = projects
     return projects
   }
+  function sessionsRoot(projectId) {
+    return path.resolve(projectsRoot, projectId, "sessions")
+  }
+  function ensureSessionsRoot(projectId) {
+    const root = sessionsRoot(projectId)
+    mkdirSync(root, { recursive: true })
+    return root
+  }
+  function appendProjectSessionRecord(projectId, sessionID, userText, assistantText) {
+    const root = ensureSessionsRoot(projectId)
+    const createdAt = Date.now()
+    const id = `${createdAt}-${Math.floor(Math.random() * 10_000_000)}`
+    const filePath = path.resolve(root, `${id}.json`)
+    const record = {
+      id,
+      sessionID,
+      projectId,
+      createdAt,
+      messages: [
+        {
+          role: "user",
+          content: typeof userText === "string" ? userText : "",
+        },
+        {
+          role: "assistant",
+          content: typeof assistantText === "string" ? assistantText : "",
+        },
+      ],
+    }
+    writeFileSync(filePath, JSON.stringify(record))
+    return record
+  }
+  function listProjectSessionRecords(projectId, limit = 5, offset = 0) {
+    const root = sessionsRoot(projectId)
+    if (!existsSync(root)) {
+      return {
+        sessions: [],
+        nextOffset: offset,
+        hasMore: false,
+      }
+    }
+    const files = readdirSync(root)
+      .filter((name) => name.endsWith(".json"))
+      .sort((a, b) => b.localeCompare(a, "en"))
+    const total = files.length
+    const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0
+    const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 5
+    const selected = files.slice(safeOffset, safeOffset + safeLimit).map((name) => {
+      const raw = readFileSync(path.resolve(root, name), "utf8")
+      return JSON.parse(raw)
+    })
+    const nextOffset = safeOffset + selected.length
+    return {
+      sessions: selected,
+      nextOffset,
+      hasMore: nextOffset < total,
+    }
+  }
+  function textFromParts(parts) {
+    if (!Array.isArray(parts)) return ""
+    return parts
+      .map((part) => (part?.type === "text" && typeof part?.text === "string" ? part.text : ""))
+      .join("\n")
+  }
+  function parseResponseJson(rawText, requestUrl) {
+    if (!rawText) return {}
+    try {
+      return JSON.parse(rawText)
+    } catch {
+      throw new Error(`llm returned non-JSON response url=${requestUrl}`)
+    }
+  }
+  function extractReply(json) {
+    const choices = Array.isArray(json?.choices) ? json.choices : []
+    const first = choices[0]
+    if (typeof first?.message?.content === "string" && first.message.content.trim()) return first.message.content
+    if (typeof json?.output_text === "string" && json.output_text.trim()) return json.output_text
+    return ""
+  }
+  async function callGoalDecomposition(projectName, userRequirementText) {
+    const llmConfig = projectConfig.llm || {}
+    if (!llmConfig.baseUrl || !llmConfig.apiKey || !llmConfig.model) {
+      return t("goal.fallback", { project: projectName })
+    }
+    const skillPath = path.resolve(import.meta.dir, "../Skills/goal-decomposition/SKILL.md")
+    const skillText = existsSync(skillPath) ? readFileSync(skillPath, "utf8") : ""
+    const requestUrl = `${String(llmConfig.baseUrl).replace(/\/$/, "")}${
+      String(llmConfig.chatPath || "/v1/chat/completions").startsWith("/")
+        ? String(llmConfig.chatPath || "/v1/chat/completions")
+        : `/${String(llmConfig.chatPath || "/v1/chat/completions")}`
+    }`
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${llmConfig.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: llmConfig.model,
+        stream: false,
+        messages: [
+          {
+            role: "system",
+            content: `你是 Swarm 的 goal-decomposition 执行助手。严格遵循以下技能说明：\n\n${skillText}`,
+          },
+          {
+            role: "user",
+            content: `${t("goal.first_round_prompt")}\n\n${t("goal.project_title_label", { project: projectName })}\n${t("goal.user_first_message_label", { message: userRequirementText })}`,
+          },
+        ],
+      }),
+    })
+    if (!response.ok) {
+      const fallback = await response.text()
+      throw new Error(`goal-decomposition llm request failed: ${fallback || response.statusText}`)
+    }
+    const reply = extractReply(parseResponseJson(await response.text(), requestUrl))
+    return reply || t("goal.fallback", { project: projectName })
+  }
   return {
     state,
     projectConfig,
     llmConfig: projectConfig.llm || {},
     resolveWithReport: helpers.resolveWithReport,
     rejectWithReport: helpers.rejectWithReport,
+    t,
     createProject(name, projectId) {
       const projectName =
         typeof name === "string" && name.trim() ? name.trim() : `Project ${state.projects.length + 1}`
@@ -143,7 +279,12 @@ function createBackendContext(projectConfig) {
       return projectsFromDirectory()
     },
     ensureSession(projectId, title) {
-      const id = typeof projectId === "string" && projectId ? projectId : createID("p")
+      const id =
+        typeof projectId === "string" && projectId
+          ? projectId
+          : typeof title === "string" && title.trim()
+            ? title.trim()
+            : createID("p")
       const linkedSessionID = state.sessionByProject[id]
       if (linkedSessionID && state.sessions[linkedSessionID]) return state.sessions[linkedSessionID]
       const project = state.projects.find((item) => item.id === id) || this.createProject(title, id)
@@ -197,6 +338,8 @@ function createBackendContext(projectConfig) {
         },
       }
       session.messages.push(message)
+      const userMessage = [...session.messages].reverse().find((item) => item?.info?.role === "user")
+      appendProjectSessionRecord(session.projectId, sessionID, textFromParts(userMessage?.parts), replyText)
       return message
     },
     beginAssistantStream(sessionID) {
@@ -239,6 +382,28 @@ function createBackendContext(projectConfig) {
       const count = Number.isInteger(limit) && limit > 0 ? limit : 80
       if (session.messages.length <= count) return [...session.messages]
       return session.messages.slice(session.messages.length - count)
+    },
+    listProjectSessions(projectId, limit, offset) {
+      return listProjectSessionRecords(projectId, limit, offset)
+    },
+    shouldTriggerGoalDecomposition(sessionID) {
+      const session = this.getSession(sessionID)
+      if (!session) return false
+      const existing = listProjectSessionRecords(session.projectId, 1, 0)
+      if (existing.sessions.length > 0) return false
+      const userCount = session.messages.filter((item) => item?.info?.role === "user").length
+      const assistantCount = session.messages.filter((item) => item?.info?.role === "assistant").length
+      return userCount === 1 && assistantCount === 0
+    },
+    async runGoalDecompositionFromFirstUserMessage(sessionID) {
+      const session = this.getSession(sessionID)
+      if (!session) throw new Error(`session not found: ${sessionID}`)
+      const project = this.listProjects().find((item) => item.id === session.projectId)
+      if (!project) throw new Error(`project not found: ${session.projectId}`)
+      const userMessage = [...session.messages].reverse().find((item) => item?.info?.role === "user")
+      const userText = textFromParts(userMessage?.parts)
+      const reply = await callGoalDecomposition(project.name, userText)
+      return reply
     },
   }
 }

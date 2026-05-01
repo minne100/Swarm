@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { ensureSessionBee } from "./bee.1.0.0.js"
 
 test("ensure-session bee success contract", async () => {
+  const captured = []
   const context = {
   resolveWithReport(_beeName, _summary, resultHoney) {
     return Promise.resolve({
@@ -18,7 +19,8 @@ test("ensure-session bee success contract", async () => {
     state: {
       projects: [{ id: "p1", name: "A" }],
     },
-    async ensureSession() {
+    async ensureSession(projectId, projectName) {
+      captured.push({ projectId, projectName })
       return "s1"
     },
   }
@@ -30,6 +32,9 @@ test("ensure-session bee success contract", async () => {
   expect(output.resultHoney.type).toBe("PromptFlowHoney")
   expect(output.resultHoney.payload.sessionID).toBe("s1")
   expect(output.reportHoney.type).toBe("BeeReportHoney")
+  expect(captured.length).toBe(1)
+  expect(captured[0].projectId).toBe("p1")
+  expect(captured[0].projectName).toBe("A")
 })
 
 test("ensure-session bee reject contract", async () => {

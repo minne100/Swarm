@@ -24,6 +24,9 @@ export class FetchProjectsBee {
       const activeProjectId = this.context.state.activeProjectId
       const exists = projects.some((item) => item.id === activeProjectId)
       this.context.state.activeProjectId = exists ? activeProjectId : projects[0]?.id || ""
+      if (this.context.state.activeProjectId) {
+        await this.context.loadProjectSessions(this.context.state.activeProjectId)
+      }
       const outputHoney = {
         type: "ProjectChangedHoney",
         payload: {

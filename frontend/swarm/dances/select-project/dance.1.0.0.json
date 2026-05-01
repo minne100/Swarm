@@ -5,6 +5,7 @@
   "input": "SelectProjectHoney",
   "bees": [
     { "name": "SetActiveProjectBee", "version": "1.0.0", "alias": "set-active-project" },
+    { "name": "LoadProjectSessionsBee", "version": "1.0.0", "alias": "load-project-sessions" },
     { "name": "RenderProjectListBee", "version": "1.0.0", "alias": "render-project-list" },
     { "name": "RenderMessagesBee", "version": "1.0.0", "alias": "render-messages" }
   ],
@@ -15,6 +16,13 @@
       "alias": "set-active-project",
       "description": "设置激活项目",
       "input": "SelectProjectHoney",
+      "onSuccess": "load-project-sessions",
+      "onFail": "render-project-list"
+    },
+    {
+      "id": "load-project-sessions",
+      "alias": "load-project-sessions",
+      "description": "加载最近会话记录",
       "onSuccess": "render-project-list",
       "onFail": "render-project-list"
     },

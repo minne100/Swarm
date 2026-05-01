@@ -1,0 +1,8 @@
+{
+  "goal.fallback": "Please describe your requirements first. I will decompose them with the goal-decomposition skill.\n\nCurrent project: {{project}}",
+  "goal.first_round_prompt": "Based on the user's requirement, provide round-1 clarification with confirmed items, pending items, and 3-6 key questions.",
+  "goal.project_title_label": "Project title: {{project}}",
+  "goal.user_first_message_label": "User first message: {{message}}",
+  "goal.seed_user_requirement": "Requirement: {{text}}",
+  "errors.request_failed": "Request failed: {{detail}}"
+}

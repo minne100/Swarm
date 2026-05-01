@@ -1,0 +1,8 @@
+{
+  "goal.fallback": "请先描述你的需求，我将使用 goal-decomposition 技能为你拆解。\n\n当前项目：{{project}}",
+  "goal.first_round_prompt": "请基于用户输入需求，先给出“需求澄清第一轮”，并输出已确认事项、待确认事项以及3-6个关键问题。",
+  "goal.project_title_label": "项目标题：{{project}}",
+  "goal.user_first_message_label": "用户第一句话：{{message}}",
+  "goal.seed_user_requirement": "需求：{{text}}",
+  "errors.request_failed": "请求失败：{{detail}}"
+}

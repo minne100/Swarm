@@ -1,6 +1,6 @@
 ---
 name: goal-decomposition
-description: 在 OpenCode 中把软件项目目标拆解成可执行文档，并强制执行目录输入、需求记录、版本迭代、确认修改、签名流程。用户提到“需求拆解/任务分解/项目规划/确认修改签名”时务必使用。
+description: 在 OpenCode 中把软件项目目标拆解成可执行文档，并强制执行需求记录、版本迭代、确认修改、签名流程。用户提到“需求拆解/任务分解/项目规划/确认修改签名”时务必使用。
 trigger: /goal-decomposition
 ---
 
@@ -67,29 +67,28 @@ trigger: /goal-decomposition
 
 当用户触发本技能时，你必须按顺序执行以下流程，且不要跳步。
 
-1. 让用户输入项目目录（本地路径）。
-2. 让用户输入项目需求（可长可短，按用户原话记录）。
-3. 执行“0. 先做需求澄清（强制 Gate）”，通过后再继续。
-4. 在项目根目录创建或更新 `README.md`，记录：
+1. 让用户输入项目需求（可长可短，按用户原话记录）。
+2. 执行“0. 先做需求澄清（强制 Gate）”，通过后再继续。
+3. 在项目根目录创建或更新 `README.md`，记录：
    - 本次修改意见（不要重复粘贴完整原始需求）
    - 提交时间
    - 本次生成的拆解文件路径
-5. 运行脚本生成本次版本信息（不要手算版本号）：
+4. 运行脚本生成本次版本信息（不要手算版本号）：
    - `python Skills/goal-decomposition/scripts/prepare_goal_files.py --project-root "<项目目录>"`
-6. 以用户当前使用语言生成一份 **Markdown 拆解文档**，保存到：
+5. 以用户当前使用语言生成一份 **Markdown 拆解文档**，保存到：
    - `项目根目录/docs/goal-decomposition/`
    - 文件名：`{yyyymmdd_hhmmss}_version_{X}.md`
    - 编码：UTF-8
-7. 在项目根目录 `README.md` 追加记录（用脚本，不手写）：
+6. 在项目根目录 `README.md` 追加记录（用脚本，不手写）：
    - `python Skills/goal-decomposition/scripts/update_readme_log.py --project-root "<项目目录>" --change-note "<本次修改意见或初始需求摘要>" --plan-file "<拆解文档路径>" --version <X> --status "待确认"`
-8. 先在普通回复中输出拆解文档全文（用于 OpenCode 右侧审查栏显示），并附文件路径。
-9. 紧接着输出文本提示（语言跟随用户）：
+7. 先在普通回复中输出拆解文档全文，并附文件路径。
+8. 紧接着输出文本提示（语言跟随用户）：
    - 中文：`如果还需调整，请输入修改意见；否则请输入 OK。`
    - 英文：`If you want changes, enter revision notes; otherwise type OK.`
-10. 处理用户输入：
+9. 处理用户输入：
    - 输入 `OK`（大小写不敏感）-> 进入签名流程。
    - 其他输入 -> 视为修改意见，生成新版本并重复流程。
-11. 如果用户输入 `OK`：
+10. 如果用户输入 `OK`：
    - 要求用户输入姓名用于签名
    - 运行签名脚本写入当前版本文档：
      - `python Skills/goal-decomposition/scripts/sign_plan.py --plan-file "<当前版本文档路径>" --sign-name "<姓名>"`
@@ -111,7 +110,7 @@ trigger: /goal-decomposition
 
 ### 路径
 
-- 根目录：用户输入路径（记为 `PROJECT_ROOT`）
+- 根目录：当前项目路径（记为 `PROJECT_ROOT`）
 - 拆解目录：`PROJECT_ROOT/docs/goal-decomposition/`
 - 日志文件：`PROJECT_ROOT/README.md`
 
@@ -235,16 +234,12 @@ python Skills/goal-decomposition/scripts/update_readme_log.py \
    - 收到姓名后写入文档，并记录签名时间
 8. `OK` 判断必须大小写不敏感（`ok/Ok/oK/OK` 都视为确认）。
 
-## OpenCode 环境实现建议
+## swarm 环境实现建议
 
-在 OpenCode 中执行时，按以下方式落地：
+在 swarm 中执行时，按以下方式落地：
 
 - 使用文件工具和本技能脚本创建目录与文件。
-- 在 OpenCode（非 TUI）场景，审查显示采用“普通回复正文 + markdown代码块”方式，让文档出现在右侧审查栏。
-- 不使用弹窗按钮确认，统一用文本口令：
-  - 用户输入 `OK`（大小写不敏感）表示确认
-  - 用户输入其他内容表示修改意见
-- 若文档过长，正文可截断显示并提示“已截断”，但必须给出完整文件路径。
+- 在 swarm的webui场景，审查显示采用“普通回复正文 + markdown代码块”方式，让文档出现在对话栏。
 - 所有时间均使用本地时间。
 - 所有写入均为 UTF-8。
 

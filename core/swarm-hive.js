@@ -990,10 +990,40 @@ function sleep(ms) {
   })
 }
 
+function renderMessageTemplate(template, vars = {}) {
+  return String(template || "").replace(/\{\{(\w+)\}\}/g, (_m, key) =>
+    vars[key] === undefined || vars[key] === null ? "" : String(vars[key]),
+  )
+}
+
+function createTranslator(messages = {}) {
+  return (key, vars = {}) => {
+    const template = messages[key]
+    if (typeof template !== "string") return key
+    return renderMessageTemplate(template, vars)
+  }
+}
+
 function listFromMessagesPayload(payload) {
   if (Array.isArray(payload)) return payload
   if (payload && Array.isArray(payload.messages)) return payload.messages
   return []
+}
+
+function messagesFromSessionRecords(records, newestFirst = false) {
+  const list = Array.isArray(records) ? records : []
+  const ordered = newestFirst ? [...list].reverse() : list
+  return ordered.flatMap((record) => {
+    const messages = Array.isArray(record?.messages) ? record.messages : []
+    return messages
+      .map((message) => {
+        const role = message?.role === "assistant" ? "ai" : message?.role === "user" ? "user" : ""
+        const content = typeof message?.content === "string" ? message.content : ""
+        if (!role || !content) return null
+        return { role, content }
+      })
+      .filter(Boolean)
+  })
 }
 
 function textFromMessage(msg) {
@@ -1185,8 +1215,18 @@ function createBrowserElements(projectConfig, rootDocument = document) {
 
 function createBrowserProjectContext(projectConfig, elements, options = {}) {
   const state = cloneValue(projectConfig.initialState)
+  const t = createTranslator(options.messages || projectConfig?.i18n?.messages || {})
   if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
     state.streamingAssistantByProject = {}
+  }
+  if (!state.projectSessionOffsets || typeof state.projectSessionOffsets !== "object") {
+    state.projectSessionOffsets = {}
+  }
+  if (!state.projectSessionHasMore || typeof state.projectSessionHasMore !== "object") {
+    state.projectSessionHasMore = {}
+  }
+  if (!state.loadingOlderSessions || typeof state.loadingOlderSessions !== "object") {
+    state.loadingOlderSessions = {}
   }
   const apiBase = options.apiBase || projectConfig?.api?.base || "http://127.0.0.1:3000"
   const pollIntervalMs =
@@ -1197,6 +1237,7 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
   const context = {
     state,
     elements,
+    t,
     startDance: null,
     resolveWithReport: helpers.resolveWithReport,
     rejectWithReport: helpers.rejectWithReport,
@@ -1317,7 +1358,7 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
       if (existing) return existing
       const created = await context.request("/session", {
         method: "POST",
-        body: JSON.stringify({ title: projectName }),
+        body: JSON.stringify({ projectId, title: projectName }),
       })
       const sessionID = created?.id
       if (!sessionID) throw new Error("创建会话失败：后端未返回 sessionID")
@@ -1328,7 +1369,7 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve(String(reader.result || ""))
-        reader.onerror = () => reject(new Error(`读取附件失败: ${file.name}`))
+        reader.onerror = () => reject(new Error(t("errors.read_attachment_failed", { name: file.name })))
         reader.readAsDataURL(file)
       })
     },
@@ -1364,6 +1405,35 @@ function createBrowserProjectContext(projectConfig, elements, options = {}) {
       }
       return ""
     },
+    async loadProjectSessions(projectId, appendOlder = false) {
+      if (!projectId) return
+      const currentOffset = Number(state.projectSessionOffsets[projectId] || 0)
+      const offset = appendOlder ? currentOffset : 0
+      const payload = await context.request(
+        `/api/projects/${encodeURIComponent(projectId)}/sessions?limit=5&offset=${offset}`,
+      )
+      const records = Array.isArray(payload?.sessions) ? payload.sessions : []
+      const incoming = messagesFromSessionRecords(records, true)
+      const existing = Array.isArray(state.messages[projectId]) ? state.messages[projectId] : []
+      state.messages[projectId] = appendOlder ? [...incoming, ...existing] : incoming
+      if (!appendOlder && state.messages[projectId].length === 0) {
+        state.messages[projectId] = [{ role: "ai", content: t("ui.welcome.describe_requirement") }]
+      }
+      state.projectSessionOffsets[projectId] = Number(payload?.nextOffset || offset + records.length)
+      state.projectSessionHasMore[projectId] = Boolean(payload?.hasMore)
+    },
+    async loadOlderProjectSessions(projectId) {
+      if (!projectId) return false
+      if (!state.projectSessionHasMore[projectId]) return false
+      if (state.loadingOlderSessions[projectId]) return false
+      state.loadingOlderSessions[projectId] = true
+      try {
+        await context.loadProjectSessions(projectId, true)
+        return true
+      } finally {
+        state.loadingOlderSessions[projectId] = false
+      }
+    },
   }
   return context
 }
@@ -1372,12 +1442,12 @@ function requestProjectName(context) {
   const suggested = `Project ${context.state.projects.length + 1}`
   if (typeof globalThis.prompt !== "function") return suggested
   while (true) {
-    const raw = globalThis.prompt("请输入项目名", suggested)
+    const raw = globalThis.prompt(context.t("ui.prompt.project_name"), suggested)
     if (raw === null) return null
     const value = raw.trim()
     if (value) return value
     if (typeof globalThis.alert === "function") {
-      globalThis.alert("项目名不能为空")
+      globalThis.alert(context.t("ui.alert.project_name_empty"))
     }
   }
 }
@@ -1420,10 +1490,22 @@ function bindBrowserProjectHandlers(projectConfig, context, startDance) {
       },
     })
   })
+  elements.messagesEl.addEventListener("scroll", async () => {
+    if (elements.messagesEl.scrollTop > 10) return
+    const project = context.activeProject()
+    if (!project) return
+    const beforeHeight = elements.messagesEl.scrollHeight
+    const loaded = await context.loadOlderProjectSessions(project.id)
+    if (!loaded) return
+    context.renderMessages()
+    const afterHeight = elements.messagesEl.scrollHeight
+    elements.messagesEl.scrollTop = Math.max(0, afterHeight - beforeHeight)
+  })
 }
 
 function createBunProjectContext(projectConfig, options = {}) {
   const state = cloneValue(projectConfig.initialState)
+  const t = createTranslator(options.messages || projectConfig?.i18n?.messages || {})
   if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
     state.streamingAssistantByProject = {}
   }
@@ -1500,7 +1582,7 @@ function createBunProjectContext(projectConfig, options = {}) {
       if (existing) return existing
       const created = await this.request("/session", {
         method: "POST",
-        body: JSON.stringify({ title: projectName }),
+        body: JSON.stringify({ projectId, title: projectName }),
       })
       const sessionID = created?.id
       if (!sessionID) throw new Error("创建会话失败：后端未返回 sessionID")
@@ -1524,6 +1606,7 @@ function createBunProjectContext(projectConfig, options = {}) {
     async waitAssistantReply() {
       return ""
     },
+    t,
   }
 }
 
@@ -1531,7 +1614,11 @@ export async function createBrowserLoadedProgram(loadedProject, options = {}) {
   if (!loadedProject || typeof loadedProject !== "object") throw new Error("loadedProject 必须是对象")
   if (!loadedProject.projectConfig) throw new Error("loadedProject.projectConfig 缺失")
   const projectConfig = loadedProject.projectConfig
-  const context = createBrowserProjectContext(projectConfig, createBrowserElements(projectConfig), options)
+  const context = createBrowserProjectContext(projectConfig, createBrowserElements(projectConfig), {
+    ...options,
+    messages: projectConfig?.i18n?.messages || {},
+  })
+  context.t = createTranslator(projectConfig?.i18n?.messages || {})
   return {
     registerBees(hive) {
       registerLoadedBees(hive, context, loadedProject.beeDescriptors || [])

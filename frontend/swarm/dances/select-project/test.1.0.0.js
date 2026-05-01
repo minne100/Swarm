@@ -17,4 +17,5 @@ test("select-project dance definition contract", async () => {
   })
   expect(dance.name).toBe("SelectProjectDance")
   expect(dance.input).toBe("SelectProjectHoney")
+  expect(dance.steps.some((step) => step.id === "load-project-sessions")).toBe(true)
 })

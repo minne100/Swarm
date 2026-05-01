@@ -55,4 +55,8 @@ test("ensure-session-http-request bee contract", async () => {
   expect(output.resultHoney.type).toBe("HttpApiResponseHoney")
   expect(output.resultHoney.payload.status).toBe(200)
   expect(started.length).toBe(1)
+  expect(started[0].name).toBe("EnsureSessionApiDance")
+  expect(started[0].options.inputHoney.type).toBe("EnsureSessionRequestHoney")
+  expect(started[0].options.inputHoney.payload.projectId).toBe("p1")
+  expect(started[0].options.inputHoney.payload.title).toBe("demo")
 })

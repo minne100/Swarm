@@ -167,6 +167,32 @@ QueenBee 本身遵循 Bee 接口规范，其 `execute` 接收 `ManageDanceHoney`
 - 后端项目列表直接来自 `projects/` 目录下的子目录。
 - 如果 `projects/` 没有子目录，前端就显示空项目列表。
 
+## 多语言文案规范
+
+- 所有面向用户的提示文字必须来自语言包，禁止在 Bee/Hive/后端运行时中硬编码可见文案。
+- 语言包目录：
+- 前端：`frontend/languages/<lang>.json`
+- 后端：`backend/languages/<lang>.json`
+- 语言选择：
+- 后端使用 `SWARM_LANG`（例如 `zh-CN`、`en-US`）。
+- 前端使用 `projectConfig.i18n.language`（当前默认 `zh-CN`）。
+- 回退策略：
+- 先加载目标语言。
+- 不存在时回退到 `en-US`。
+- 若 key 仍不存在，返回 key 本身，便于尽早暴露缺失翻译。
+- key 命名规范：
+- 使用 `domain.scope.intent`，例如 `ui.welcome.describe_requirement`、`errors.backend_request_failed`。
+- key 保持稳定，不要把版本号写进 key。
+- 变量占位符：
+- 使用 `{{name}}` 形式占位。
+- 运行时负责替换占位符（例如 `{{detail}}`、`{{project}}`）。
+- 前后端一致性：
+- 语义相同的文案在前后端应保持同一 key 语义。
+- 避免出现一次性、语义不清的临时 key。
+- 变更要求：
+- 任何新增用户可见文案，至少补齐 `zh-CN` 与 `en-US` 两套翻译。
+- PR 中应同时包含 key 定义与调用代码改动。
+
 ## 自我进化
 
 在沙箱、评分、审核和版本控制下不断改进 Skill / Bee / Dance。

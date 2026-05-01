@@ -48,6 +48,12 @@ export const projectBeeDefinitions = [
     factoryExport: "listMessagesApiRequestBee",
   },
   {
+    name: "ListProjectSessionsApiRequestBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/list-project-sessions-api-request/bee.1.0.0.js",
+    factoryExport: "listProjectSessionsApiRequestBee",
+  },
+  {
     name: "NotFoundApiRequestBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/not-found-api-request/bee.1.0.0.js",
@@ -166,6 +172,7 @@ export const projectDanceFiles = [
   "./swarm/dances/ensure-session-http-request/dance.1.0.0.json",
   "./swarm/dances/submit-prompt-async-http-request/dance.1.0.0.json",
   "./swarm/dances/list-messages-api-request/dance.1.0.0.json",
+  "./swarm/dances/list-project-sessions-api-request/dance.1.0.0.json",
   "./swarm/dances/not-found-api-request/dance.1.0.0.json",
   "./swarm/dances/create-project-api/dance.1.0.0.json",
   "./swarm/dances/ensure-session-api/dance.1.0.0.json",
@@ -183,6 +190,9 @@ export const projectDanceFiles = [
 ]
 
 export const projectConfig = {
+  i18n: {
+    language: process.env.SWARM_LANG || "zh-CN",
+  },
   server: {
     host: "127.0.0.1",
     port: 3000,
@@ -226,6 +236,7 @@ export const projectConfig = {
       ensureSessionRequest: "EnsureSessionHttpRequestDance",
       submitPromptAsyncRequest: "SubmitPromptAsyncHttpRequestDance",
       listMessagesRequest: "ListMessagesApiRequestDance",
+      listProjectSessionsRequest: "ListProjectSessionsApiRequestDance",
       notFoundRequest: "NotFoundApiRequestDance",
       createProject: "CreateProjectApiDance",
       ensureSession: "EnsureSessionApiDance",

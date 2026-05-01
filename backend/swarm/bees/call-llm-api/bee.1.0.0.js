@@ -388,6 +388,22 @@ export class CallLlmApiBee {
     try {
       const session = this.context.getSession(payload.sessionID)
       if (!session) throw new Error(`session not found: ${payload.sessionID}`)
+      if (payload.triggerGoalDecomposition && typeof this.context.runGoalDecompositionFromFirstUserMessage === "function") {
+        const reply = await this.context.runGoalDecompositionFromFirstUserMessage(payload.sessionID)
+        const outputHoney = {
+          type: "PromptTaskHoney",
+          payload: {
+            ...payload,
+            reply,
+          },
+        }
+        return this.context.resolveWithReport(
+          "CallLlmApiBee",
+          "goal decomposition first round replied",
+          outputHoney,
+          buildSuccessDetail(honey, outputHoney, reply),
+        )
+      }
       const llmConfig = this.context.llmConfig || {}
       if (!llmConfig.baseUrl || !llmConfig.apiKey) {
         throw new Error("missing llm.baseUrl or llm.apiKey in backend/project.js (or SWARM_LLM_* env)")

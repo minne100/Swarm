@@ -75,7 +75,7 @@ export class CreateProjectBee {
       const previousActiveProjectId = this.context.state.activeProjectId
       this.context.state.projects.unshift({ id, name: projectName })
       this.context.state.activeProjectId = id
-      this.context.state.messages[id] = [{ role: "ai", content: `Project created: ${projectName}` }]
+      await this.context.loadProjectSessions(id)
       const outputHoney = {
         type: "ProjectChangedHoney",
         payload: { projectId: id },

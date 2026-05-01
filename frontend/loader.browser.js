@@ -19,9 +19,27 @@ async function loadDances() {
   return Promise.all(projectDanceFiles.map((file) => loadDanceFile(new URL(file, import.meta.url))))
 }
 
+async function loadMessages(language) {
+  const primary = new URL(`./languages/${language}.json`, import.meta.url)
+  const fallback = new URL("./languages/en-US.json", import.meta.url)
+  const primaryRes = await fetch(primary)
+  if (primaryRes.ok) return primaryRes.json()
+  const fallbackRes = await fetch(fallback)
+  if (!fallbackRes.ok) return {}
+  return fallbackRes.json()
+}
+
 export async function loadBrowserProjectResources(options = {}) {
+  const language = projectConfig?.i18n?.language || "zh-CN"
   return {
-    projectConfig,
+    projectConfig: {
+      ...projectConfig,
+      i18n: {
+        ...(projectConfig.i18n || {}),
+        language,
+        messages: await loadMessages(language),
+      },
+    },
     beeDescriptors: await loadBeeDescriptors(options.moduleLoader),
     dances: await loadDances(),
   }

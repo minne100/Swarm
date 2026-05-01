@@ -18,6 +18,10 @@ test("create-project bee contract", async () => {
     async request() {
       return { id: "p2", name: "Backend Project" }
     },
+    async loadProjectSessions(projectId) {
+      expect(projectId).toBe("p2")
+      this.state.messages[projectId] = [{ role: "ai", content: "seeded" }]
+    },
     state: {
       projects: [{ id: "p1", name: "A" }],
       activeProjectId: "p1",

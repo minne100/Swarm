@@ -1,0 +1,8 @@
+{
+  "ui.prompt.project_name": "Enter project name",
+  "ui.alert.project_name_empty": "Project name cannot be empty",
+  "ui.welcome.describe_requirement": "Please describe your requirements for this project in detail.",
+  "errors.read_attachment_failed": "Failed to read attachment: {{name}}",
+  "errors.backend_request_failed": "Backend request failed.\nPlease ensure backend is running on port 3000 and LLM API config is valid.\n\nDetail: {{detail}}",
+  "prompt.empty_message": "(empty message)"
+}

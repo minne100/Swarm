@@ -1,0 +1,8 @@
+{
+  "ui.prompt.project_name": "请输入项目名",
+  "ui.alert.project_name_empty": "项目名不能为空",
+  "ui.welcome.describe_requirement": "请详细描述您对这个项目的需求。",
+  "errors.read_attachment_failed": "读取附件失败: {{name}}",
+  "errors.backend_request_failed": "后端请求失败。\n请确认后端已在 3000 端口运行，并且 LLM API 配置有效。\n\n详情: {{detail}}",
+  "prompt.empty_message": "（空消息）"
+}

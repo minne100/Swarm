@@ -168,6 +168,32 @@ Why this matters:
 - Backend now derives project list directly from subdirectories under `projects/`.
 - If `projects/` has no subdirectories, UI shows an empty project list.
 
+## Localization Rules
+
+- All user-facing prompt text must come from language packs. Do not hardcode visible strings in Bee/Hive/backend runtime logic.
+- Language pack locations:
+- Frontend: `frontend/languages/<lang>.json`
+- Backend: `backend/languages/<lang>.json`
+- Language selection:
+- `SWARM_LANG` controls backend language (for example `zh-CN`, `en-US`).
+- Frontend uses `projectConfig.i18n.language` (defaults to `zh-CN` in current implementation).
+- Fallback behavior:
+- Try configured language first.
+- Fallback to `en-US` if missing.
+- If key is still missing, return the key name to expose missing translation early.
+- Key naming convention:
+- `domain.scope.intent`, for example `ui.welcome.describe_requirement`, `errors.backend_request_failed`.
+- Keep keys stable; avoid embedding versions in keys.
+- Variable placeholders:
+- Use `{{name}}` style placeholders.
+- Rendering code must replace placeholders at runtime (for example `{{detail}}`, `{{project}}`).
+- Frontend/backend consistency:
+- Shared semantics should use the same key meaning across frontend and backend.
+- Avoid one-off ad hoc key meanings.
+- Change management:
+- Adding a new visible message requires adding translations in at least `zh-CN` and `en-US`.
+- PRs should include both key definition and runtime usage changes.
+
 ## Self-Evolution
 
 Continuously improve Skill / Bee / Dance under sandboxing, scoring, review, and version control.

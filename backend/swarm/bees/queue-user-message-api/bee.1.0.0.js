@@ -58,12 +58,17 @@ export class QueueUserMessageApiBee {
     const payload = honey?.payload || {}
     try {
       const message = this.context.appendUserMessage(payload.sessionID, payload.parts)
+      const triggerGoalDecomposition =
+        typeof this.context.shouldTriggerGoalDecomposition === "function"
+          ? this.context.shouldTriggerGoalDecomposition(payload.sessionID)
+          : false
       const outputHoney = {
         type: "PromptTaskHoney",
         payload: {
           sessionID: payload.sessionID,
           parts: payload.parts,
           sentAt: message.info.time.created,
+          triggerGoalDecomposition,
         },
       }
       return this.context.resolveWithReport(

@@ -55,9 +55,10 @@ export class BuildPromptPartsBee {
   }
 
   async execute(honey) {
+    const t = typeof this.context.t === "function" ? this.context.t : (key) => key
     const payload = honey?.payload || {}
     const projectId = payload.projectId
-    const parts = [{ type: "text", text: payload.userText || "(empty message)" }]
+    const parts = [{ type: "text", text: payload.userText || t("prompt.empty_message") }]
     const files = Array.isArray(payload.files) ? payload.files : []
     try {
       const fileParts = await Promise.all(

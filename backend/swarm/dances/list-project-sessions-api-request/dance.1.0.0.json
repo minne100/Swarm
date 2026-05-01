@@ -1,0 +1,23 @@
+{
+  "name": "ListProjectSessionsApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle list sessions request for a project",
+  "input": "DispatchApiRequestHoney",
+  "bees": [
+    {
+      "name": "ListProjectSessionsApiRequestBee",
+      "version": "1.0.0",
+      "alias": "list-project-sessions-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "list-project-sessions-api-request",
+      "alias": "list-project-sessions-api-request",
+      "description": "Return paginated project session records",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}

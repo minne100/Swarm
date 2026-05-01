@@ -15,6 +15,9 @@ test("fetch-projects bee contract", async () => {
         ],
       }
     },
+    async loadProjectSessions(projectId) {
+      expect(projectId).toBe("p1")
+    },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
