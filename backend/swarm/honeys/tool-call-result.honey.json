@@ -1,0 +1,5 @@
+{
+  "type": "ToolCallResultHoney",
+  "description": "Tool execution result payload from a single local tool bee.",
+  "schema": "object"
+}

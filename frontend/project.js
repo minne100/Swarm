@@ -24,6 +24,12 @@ export const projectBeeDefinitions = [
     factoryExport: "ensureSessionBee",
   },
   {
+    name: "FetchProjectsBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/fetch-projects/bee.1.0.0.js",
+    factoryExport: "fetchProjectsBee",
+  },
+  {
     name: "QueueAssistantMessageBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/queue-assistant-message/bee.1.0.0.js",
@@ -127,16 +133,10 @@ export const projectConfig = {
     },
   },
   initialState: {
-    projects: [
-      { id: "p1", name: "Swarm Paradigm 设计" },
-      { id: "p2", name: "需求整理" },
-    ],
-    activeProjectId: "p1",
+    projects: [],
+    activeProjectId: "",
     sessionIDs: {},
-    messages: {
-      p1: [{ role: "ai", content: "你好，我是 Swarm。你可以直接描述需求，我会按项目上下文回复。" }],
-      p2: [{ role: "ai", content: "这是“需求整理”项目，欢迎开始记录任务。" }],
-    },
+    messages: {},
     files: [],
   },
 }

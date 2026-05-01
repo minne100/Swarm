@@ -1,0 +1,5 @@
+{
+  "type": "ToolCallRequestHoney",
+  "description": "Tool call request payload generated from assistant output.",
+  "schema": "object"
+}

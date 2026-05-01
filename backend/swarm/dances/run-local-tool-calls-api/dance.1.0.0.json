@@ -1,0 +1,24 @@
+{
+  "name": "RunLocalToolCallsApiDance",
+  "version": "1.0.0",
+  "description": "Parse assistant tool call blocks and execute local tool bees",
+  "input": "PromptTaskHoney",
+  "output": "PromptTaskHoney",
+  "bees": [
+    {
+      "name": "RunLocalToolCallsApiBee",
+      "version": "1.0.0",
+      "alias": "run-local-tool-calls-api"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "run-local-tool-calls",
+      "alias": "run-local-tool-calls-api",
+      "description": "Execute tool calls from assistant reply",
+      "input": "PromptTaskHoney",
+      "output": "PromptTaskHoney"
+    }
+  ]
+}

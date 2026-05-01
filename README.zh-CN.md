@@ -160,6 +160,13 @@ QueenBee 本身遵循 Bee 接口规范，其 `execute` 接收 `ManageDanceHoney`
 
 **注**：Bee 接口规范本身是语言无关的，目前以 JavaScript 为第一阶段参考实现，未来可扩展至 Python、Rust 等语言，不同语言实现的 Bee 可通过标准 Honey 协议互通。
 
+## 当前 Demo 行为
+
+- 前端不再使用 `frontend/project.js` 的 `initialState` 预置虚假项目。
+- 启动时前端 Hive 会调用后端 `GET /api/projects`，渲染真实项目列表。
+- 后端项目列表直接来自 `projects/` 目录下的子目录。
+- 如果 `projects/` 没有子目录，前端就显示空项目列表。
+
 ## 自我进化
 
 在沙箱、评分、审核和版本控制下不断改进 Skill / Bee / Dance。

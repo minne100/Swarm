@@ -1,5 +1,5 @@
 import path from "node:path"
-import { mkdirSync } from "node:fs"
+import { mkdirSync, readdirSync } from "node:fs"
 import { loadBunProjectResources } from "./loader.bun.js"
 import { bootBunLoadedProject } from "./swarm-hive.js"
 
@@ -105,6 +105,19 @@ function createBackendContext(projectConfig) {
   if (!state.sessions || typeof state.sessions !== "object") state.sessions = {}
   if (!state.sessionByProject || typeof state.sessionByProject !== "object") state.sessionByProject = {}
   const helpers = createContractHelpers()
+  function projectsFromDirectory() {
+    const entries = readdirSync(projectsRoot, { withFileTypes: true })
+    const projects = entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => ({
+        id: entry.name,
+        name: entry.name,
+        createdAt: 0,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
+    state.projects = projects
+    return projects
+  }
   return {
     state,
     projectConfig,
@@ -112,9 +125,9 @@ function createBackendContext(projectConfig) {
     resolveWithReport: helpers.resolveWithReport,
     rejectWithReport: helpers.rejectWithReport,
     createProject(name, projectId) {
-      const id = typeof projectId === "string" && projectId ? projectId : createID("p")
       const projectName =
         typeof name === "string" && name.trim() ? name.trim() : `Project ${state.projects.length + 1}`
+      const id = typeof projectId === "string" && projectId ? projectId : projectName
       const existing = state.projects.find((item) => item.id === id)
       if (existing) return existing
       ensureProjectDirectory(projectsRoot, projectName)
@@ -127,7 +140,7 @@ function createBackendContext(projectConfig) {
       return project
     },
     listProjects() {
-      return [...state.projects]
+      return projectsFromDirectory()
     },
     ensureSession(projectId, title) {
       const id = typeof projectId === "string" && projectId ? projectId : createID("p")

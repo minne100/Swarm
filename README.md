@@ -161,6 +161,13 @@ Why this matters:
 
 **Note**: Bee interface specifications are language-agnostic. JavaScript is phase-1 reference implementation, and future extensions can include Python, Rust, and others. Bee implementations in different languages can interoperate through the standard Honey protocol.
 
+## Current Demo Behavior
+
+- The frontend no longer seeds fake projects from `frontend/project.js` `initialState`.
+- On bootstrap, frontend Hive calls backend `GET /api/projects` and renders real project data.
+- Backend now derives project list directly from subdirectories under `projects/`.
+- If `projects/` has no subdirectories, UI shows an empty project list.
+
 ## Self-Evolution
 
 Continuously improve Skill / Bee / Dance under sandboxing, scoring, review, and version control.

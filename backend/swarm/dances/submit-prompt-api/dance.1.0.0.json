@@ -20,6 +20,11 @@
       "alias": "queue-assistant-message-api"
     },
     {
+      "name": "RunLocalToolCallsApiBee",
+      "version": "1.0.0",
+      "alias": "run-local-tool-calls-api"
+    },
+    {
       "name": "QueueAssistantErrorApiBee",
       "version": "1.0.0",
       "alias": "queue-assistant-error-api"
@@ -40,6 +45,15 @@
       "id": "call-llm",
       "alias": "call-llm-api",
       "description": "Call LLM provider with current session context",
+      "input": "PromptTaskHoney",
+      "output": "PromptTaskHoney",
+      "onSuccess": "run-local-tool-calls",
+      "onFail": "queue-assistant-error"
+    },
+    {
+      "id": "run-local-tool-calls",
+      "alias": "run-local-tool-calls-api",
+      "description": "Execute local tool and skill calls from assistant output",
       "input": "PromptTaskHoney",
       "output": "PromptTaskHoney",
       "onSuccess": "queue-assistant-message",

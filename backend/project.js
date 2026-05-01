@@ -101,6 +101,60 @@ export const projectBeeDefinitions = [
     modulePath: "./swarm/bees/queue-prompt-async-api/bee.1.0.0.js",
     factoryExport: "queuePromptAsyncApiBee",
   },
+  {
+    name: "RunLocalToolCallsApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/run-local-tool-calls-api/bee.1.0.0.js",
+    factoryExport: "runLocalToolCallsApiBee",
+  },
+  {
+    name: "ToolLocalListFilesApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-local-list-files-api/bee.1.0.0.js",
+    factoryExport: "toolLocalListFilesApiBee",
+  },
+  {
+    name: "ToolLocalReadFileApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-local-read-file-api/bee.1.0.0.js",
+    factoryExport: "toolLocalReadFileApiBee",
+  },
+  {
+    name: "ToolLocalSearchTextApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-local-search-text-api/bee.1.0.0.js",
+    factoryExport: "toolLocalSearchTextApiBee",
+  },
+  {
+    name: "ToolLocalWriteFileApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-local-write-file-api/bee.1.0.0.js",
+    factoryExport: "toolLocalWriteFileApiBee",
+  },
+  {
+    name: "ToolSkillReadApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-skill-read-api/bee.1.0.0.js",
+    factoryExport: "toolSkillReadApiBee",
+  },
+  {
+    name: "ToolBrowserNavigateApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-browser-navigate-api/bee.1.0.0.js",
+    factoryExport: "toolBrowserNavigateApiBee",
+  },
+  {
+    name: "ToolBrowserClickApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-browser-click-api/bee.1.0.0.js",
+    factoryExport: "toolBrowserClickApiBee",
+  },
+  {
+    name: "ToolBrowserScreenshotApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-browser-screenshot-api/bee.1.0.0.js",
+    factoryExport: "toolBrowserScreenshotApiBee",
+  },
 ]
 
 export const projectDanceFiles = [
@@ -117,6 +171,15 @@ export const projectDanceFiles = [
   "./swarm/dances/ensure-session-api/dance.1.0.0.json",
   "./swarm/dances/submit-prompt-async-api/dance.1.0.0.json",
   "./swarm/dances/submit-prompt-api/dance.1.0.0.json",
+  "./swarm/dances/run-local-tool-calls-api/dance.1.0.0.json",
+  "./swarm/dances/tool-local-list-files-api/dance.1.0.0.json",
+  "./swarm/dances/tool-local-read-file-api/dance.1.0.0.json",
+  "./swarm/dances/tool-local-search-text-api/dance.1.0.0.json",
+  "./swarm/dances/tool-local-write-file-api/dance.1.0.0.json",
+  "./swarm/dances/tool-skill-read-api/dance.1.0.0.json",
+  "./swarm/dances/tool-browser-navigate-api/dance.1.0.0.json",
+  "./swarm/dances/tool-browser-click-api/dance.1.0.0.json",
+  "./swarm/dances/tool-browser-screenshot-api/dance.1.0.0.json",
 ]
 
 export const projectConfig = {
@@ -135,6 +198,23 @@ export const projectConfig = {
     multimodal: process.env.SWARM_LLM_MULTIMODAL || "",
     multimodalImage: process.env.SWARM_LLM_MULTIMODAL_IMAGE || "",
     multimodalAudio: process.env.SWARM_LLM_MULTIMODAL_AUDIO || "",
+  },
+  localTools: {
+    enabled: (process.env.SWARM_LOCAL_TOOLS_ENABLED || "true").toLowerCase() === "true",
+    workspaceRoot: process.env.SWARM_WORKSPACE_ROOT || "../..",
+    skillsRoot: process.env.SWARM_SKILLS_ROOT || "../Skills",
+    obscuraCommand: process.env.SWARM_OBSCURA_COMMAND || "obscura",
+    dances: {
+      runToolCalls: "RunLocalToolCallsApiDance",
+      listFiles: "ToolLocalListFilesApiDance",
+      readFile: "ToolLocalReadFileApiDance",
+      searchText: "ToolLocalSearchTextApiDance",
+      writeFile: "ToolLocalWriteFileApiDance",
+      readSkill: "ToolSkillReadApiDance",
+      browserNavigate: "ToolBrowserNavigateApiDance",
+      browserClick: "ToolBrowserClickApiDance",
+      browserScreenshot: "ToolBrowserScreenshotApiDance",
+    },
   },
   api: {
     dances: {

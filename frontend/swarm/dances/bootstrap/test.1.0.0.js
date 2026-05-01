@@ -16,4 +16,6 @@ test("bootstrap dance definition contract", async () => {
     expect(typeof step.description).toBe("string")
   })
   expect(dance.name).toBe("BootstrapDance")
+  expect(dance.steps[0].id).toBe("fetch-projects")
+  expect(dance.steps[0].alias).toBe("fetch-projects")
 })

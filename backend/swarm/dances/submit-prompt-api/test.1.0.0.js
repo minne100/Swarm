@@ -13,4 +13,6 @@ test("submit-prompt-api dance definition contract", async () => {
     expect(typeof step.alias).toBe("string")
     expect(typeof step.description).toBe("string")
   })
+  expect(dance.steps.some((step) => step.id === "run-local-tool-calls")).toBe(true)
+  expect(dance.steps.some((step) => step.alias === "run-local-tool-calls-api")).toBe(true)
 })
