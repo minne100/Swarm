@@ -1,5 +1,49 @@
+import path from "node:path"
+import { existsSync, readdirSync } from "node:fs"
+
 function normalizeValue(value) {
   return value === undefined ? null : value
+}
+
+function normalizeParts(parts) {
+  if (!Array.isArray(parts) || parts.length === 0) return [{ type: "text", text: "" }]
+  const normalized = parts
+    .map((part) => {
+      if (!part || typeof part !== "object") return null
+      if (part.type === "text" && typeof part.text === "string") return { type: "text", text: part.text }
+      if (part.type === "file") {
+        const filename = typeof part.filename === "string" ? part.filename : "file"
+        const mime = typeof part.mime === "string" ? part.mime : "application/octet-stream"
+        const url = typeof part.url === "string" ? part.url : ""
+        return { type: "file", filename, mime, url }
+      }
+      return null
+    })
+    .filter(Boolean)
+  if (normalized.length > 0) return normalized
+  return [{ type: "text", text: "" }]
+}
+
+function appendUserMessage(state, sessionID, parts) {
+  const session = state?.sessions?.[sessionID]
+  if (!session) throw new Error(`session not found: ${sessionID}`)
+  const message = {
+    id: `m-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`,
+    parts: normalizeParts(parts),
+    info: { role: "user", time: { created: Date.now() } },
+  }
+  session.messages.push(message)
+  return message
+}
+
+function shouldTriggerGoalDecomposition(state, runtime, sessionID) {
+  const session = state?.sessions?.[sessionID]
+  if (!session) return false
+  const persistedRoot = path.resolve(runtime.projectsRoot, session.projectId, "sessions")
+  if (existsSync(persistedRoot) && readdirSync(persistedRoot).some((name) => name.endsWith(".json"))) return false
+  const userCount = session.messages.filter((item) => item?.info?.role === "user").length
+  const assistantCount = session.messages.filter((item) => item?.info?.role === "assistant").length
+  return userCount === 1 && assistantCount === 0
 }
 
 function buildSuccessDetail(inputHoney, outputHoney, sentAt) {
@@ -57,11 +101,8 @@ export class QueueUserMessageApiBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     try {
-      const message = this.context.appendUserMessage(payload.sessionID, payload.parts)
-      const triggerGoalDecomposition =
-        typeof this.context.shouldTriggerGoalDecomposition === "function"
-          ? this.context.shouldTriggerGoalDecomposition(payload.sessionID)
-          : false
+      const message = appendUserMessage(this.context.state, payload.sessionID, payload.parts)
+      const triggerGoalDecomposition = shouldTriggerGoalDecomposition(this.context.state, this.context.runtime, payload.sessionID)
       const outputHoney = {
         type: "PromptTaskHoney",
         payload: {

@@ -77,7 +77,7 @@ export class SubmitPromptAsyncHttpRequestBee {
           },
         )
       }
-      if (!this.context.hasSession(sessionID)) {
+      if (!this.context.state?.sessions?.[sessionID]) {
         const outputHoney = responseHoney(404, { error: `session not found: ${sessionID}` }, "json", corsHeaders())
         return this.context.resolveWithReport(
           "SubmitPromptAsyncHttpRequestBee",

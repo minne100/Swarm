@@ -3,6 +3,16 @@ import { queueUserMessageApiBee } from "./bee.1.0.0.js"
 
 test("queue-user-message-api bee contract", async () => {
   const context = {
+    runtime: { projectsRoot: "/tmp/swarm-test-queue-user-message" },
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          projectId: "p1",
+          messages: [],
+        },
+      },
+    },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
@@ -14,11 +24,6 @@ test("queue-user-message-api bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    appendUserMessage() {
-      return {
-        info: { time: { created: 10 } },
-      }
     },
   }
   const bee = queueUserMessageApiBee(context)

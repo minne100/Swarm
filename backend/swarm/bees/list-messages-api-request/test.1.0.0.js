@@ -3,6 +3,14 @@ import { listMessagesApiRequestBee } from "./bee.1.0.0.js"
 
 test("list-messages-api-request bee contract", async () => {
   const context = {
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          messages: [{ id: "m1" }],
+        },
+      },
+    },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
@@ -14,12 +22,6 @@ test("list-messages-api-request bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    hasSession(sessionID) {
-      return sessionID === "s1"
-    },
-    listMessages() {
-      return [{ id: "m1" }]
     },
   }
   const bee = listMessagesApiRequestBee(context)

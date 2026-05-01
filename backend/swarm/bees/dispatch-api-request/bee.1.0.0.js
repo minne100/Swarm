@@ -84,6 +84,8 @@ function resolveDanceName(config, method, pathname) {
   if (method === "POST" && /^\/session\/([^/]+)\/prompt_async$/.test(pathname)) return config.api.dances.submitPromptAsyncRequest
   if (method === "GET" && /^\/session\/([^/]+)\/message$/.test(pathname)) return config.api.dances.listMessagesRequest
   if (method === "GET" && /^\/api\/projects\/([^/]+)\/sessions$/.test(pathname)) return config.api.dances.listProjectSessionsRequest
+  if (method === "GET" && pathname === "/api/llm/providers") return config.api.dances.listLlmProvidersRequest
+  if (method === "POST" && pathname === "/api/llm/providers/active") return config.api.dances.setActiveLlmProviderRequest
   return config.api.dances.notFoundRequest
 }
 

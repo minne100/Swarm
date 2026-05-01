@@ -1,5 +1,31 @@
+import path from "node:path"
+import { mkdirSync } from "node:fs"
+
 function normalizeValue(value) {
   return value === undefined ? null : value
+}
+
+function ensureProjectDirectory(projectsRoot, projectName) {
+  const name = typeof projectName === "string" ? projectName.trim() : ""
+  if (!name) throw new Error("project name is required")
+  if (name === "." || name === ".." || /[\\/]/.test(name)) throw new Error(`invalid project name: ${projectName}`)
+  const target = path.resolve(projectsRoot, name)
+  const relative = path.relative(projectsRoot, target)
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`invalid project name: ${projectName}`)
+  mkdirSync(target, { recursive: true })
+  mkdirSync(path.resolve(target, "sessions"), { recursive: true })
+  return target
+}
+
+function createProject(state, runtime, name, projectId) {
+  const projectName = typeof name === "string" && name.trim() ? name.trim() : `Project ${state.projects.length + 1}`
+  const id = typeof projectId === "string" && projectId ? projectId : projectName
+  const existing = state.projects.find((item) => item.id === id)
+  if (existing) return existing
+  ensureProjectDirectory(runtime.projectsRoot, projectName)
+  const project = { id, name: projectName, createdAt: Date.now() }
+  state.projects.unshift(project)
+  return project
 }
 
 function buildSuccessDetail(inputHoney, outputHoney, project) {
@@ -52,7 +78,7 @@ export class CreateProjectApiBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     try {
-      const project = this.context.createProject(payload.name, payload.projectId)
+      const project = createProject(this.context.state, this.context.runtime, payload.name, payload.projectId)
       const outputHoney = {
         type: "ProjectCreatedHoney",
         payload: { project },

@@ -3,6 +3,8 @@ import { createProjectApiBee } from "./bee.1.0.0.js"
 
 test("create-project-api bee contract", async () => {
   const context = {
+    state: { projects: [] },
+    runtime: { projectsRoot: "/tmp/swarm-test-create-project" },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
@@ -14,9 +16,6 @@ test("create-project-api bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    createProject(name) {
-      return { id: "p1", name, createdAt: 1 }
     },
   }
   const bee = createProjectApiBee(context)

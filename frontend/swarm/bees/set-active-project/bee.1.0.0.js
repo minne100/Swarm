@@ -78,6 +78,10 @@ export class SetActiveProjectBee {
     const previousProjectId = this.context.state.activeProjectId
     this.context.state.activeProjectId = projectId
     this.context.ensureProjectMessages(projectId)
+    if (typeof this.context.setSubmitState === "function") {
+      const submitting = Boolean(this.context.state?.submittingByProject?.[projectId])
+      this.context.setSubmitState(projectId, submitting)
+    }
     const outputHoney = {
       type: "ProjectChangedHoney",
       payload: { projectId },

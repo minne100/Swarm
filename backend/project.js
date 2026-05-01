@@ -1,5 +1,11 @@
 export const projectBeeDefinitions = [
   {
+    name: "BootstrapRuntimeBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/bootstrap-runtime/bee.1.0.0.js",
+    factoryExport: "bootstrapRuntimeBee",
+  },
+  {
     name: "DispatchApiRequestBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/dispatch-api-request/bee.1.0.0.js",
@@ -52,6 +58,18 @@ export const projectBeeDefinitions = [
     version: "1.0.0",
     modulePath: "./swarm/bees/list-project-sessions-api-request/bee.1.0.0.js",
     factoryExport: "listProjectSessionsApiRequestBee",
+  },
+  {
+    name: "ListLlmProvidersApiRequestBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/list-llm-providers-api-request/bee.1.0.0.js",
+    factoryExport: "listLlmProvidersApiRequestBee",
+  },
+  {
+    name: "SetActiveLlmProviderApiRequestBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/set-active-llm-provider-api-request/bee.1.0.0.js",
+    factoryExport: "setActiveLlmProviderApiRequestBee",
   },
   {
     name: "NotFoundApiRequestBee",
@@ -144,6 +162,12 @@ export const projectBeeDefinitions = [
     factoryExport: "toolSkillReadApiBee",
   },
   {
+    name: "ToolSkillGoalDecompositionApiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/tool-skill-goal-decomposition-api/bee.1.0.0.js",
+    factoryExport: "toolSkillGoalDecompositionApiBee",
+  },
+  {
     name: "ToolBrowserNavigateApiBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/tool-browser-navigate-api/bee.1.0.0.js",
@@ -164,6 +188,7 @@ export const projectBeeDefinitions = [
 ]
 
 export const projectDanceFiles = [
+  "./swarm/dances/bootstrap-runtime/dance.1.0.0.json",
   "./swarm/dances/dispatch-api-request/dance.1.0.0.json",
   "./swarm/dances/options-api-request/dance.1.0.0.json",
   "./swarm/dances/health-api-request/dance.1.0.0.json",
@@ -173,6 +198,8 @@ export const projectDanceFiles = [
   "./swarm/dances/submit-prompt-async-http-request/dance.1.0.0.json",
   "./swarm/dances/list-messages-api-request/dance.1.0.0.json",
   "./swarm/dances/list-project-sessions-api-request/dance.1.0.0.json",
+  "./swarm/dances/list-llm-providers-api-request/dance.1.0.0.json",
+  "./swarm/dances/set-active-llm-provider-api-request/dance.1.0.0.json",
   "./swarm/dances/not-found-api-request/dance.1.0.0.json",
   "./swarm/dances/create-project-api/dance.1.0.0.json",
   "./swarm/dances/ensure-session-api/dance.1.0.0.json",
@@ -184,6 +211,7 @@ export const projectDanceFiles = [
   "./swarm/dances/tool-local-search-text-api/dance.1.0.0.json",
   "./swarm/dances/tool-local-write-file-api/dance.1.0.0.json",
   "./swarm/dances/tool-skill-read-api/dance.1.0.0.json",
+  "./swarm/dances/tool-skill-goal-decomposition-api/dance.1.0.0.json",
   "./swarm/dances/tool-browser-navigate-api/dance.1.0.0.json",
   "./swarm/dances/tool-browser-click-api/dance.1.0.0.json",
   "./swarm/dances/tool-browser-screenshot-api/dance.1.0.0.json",
@@ -193,21 +221,25 @@ export const projectConfig = {
   i18n: {
     language: process.env.SWARM_LANG || "zh-CN",
   },
+  bootstrap: {
+    dance: "BootstrapRuntimeDance",
+    inputHoney: {
+      type: "RuntimeBootstrapHoney",
+      payload: {},
+    },
+  },
   server: {
     host: "127.0.0.1",
     port: 3000,
     frontendRoot: "../frontend",
     indexFile: "index.html",
   },
+  runtime: {
+    projectsRoot: process.env.SWARM_PROJECTS_ROOT || "../projects",
+  },
   llm: {
-    baseUrl: process.env.SWARM_LLM_BASE_URL || "",
-    apiKey: process.env.SWARM_LLM_API_KEY || "",
-    model: process.env.SWARM_LLM_MODEL || "",
-    chatPath: process.env.SWARM_LLM_CHAT_PATH || "/v1/chat/completions",
-    stream: process.env.SWARM_LLM_STREAM || "true",
-    multimodal: process.env.SWARM_LLM_MULTIMODAL || "",
-    multimodalImage: process.env.SWARM_LLM_MULTIMODAL_IMAGE || "",
-    multimodalAudio: process.env.SWARM_LLM_MULTIMODAL_AUDIO || "",
+    activeProviderId: process.env.SWARM_LLM_ACTIVE_PROVIDER || "1",
+    providers: [],
   },
   localTools: {
     enabled: (process.env.SWARM_LOCAL_TOOLS_ENABLED || "true").toLowerCase() === "true",
@@ -221,6 +253,7 @@ export const projectConfig = {
       searchText: "ToolLocalSearchTextApiDance",
       writeFile: "ToolLocalWriteFileApiDance",
       readSkill: "ToolSkillReadApiDance",
+      runGoalDecompositionSkill: "ToolSkillGoalDecompositionApiDance",
       browserNavigate: "ToolBrowserNavigateApiDance",
       browserClick: "ToolBrowserClickApiDance",
       browserScreenshot: "ToolBrowserScreenshotApiDance",
@@ -237,6 +270,8 @@ export const projectConfig = {
       submitPromptAsyncRequest: "SubmitPromptAsyncHttpRequestDance",
       listMessagesRequest: "ListMessagesApiRequestDance",
       listProjectSessionsRequest: "ListProjectSessionsApiRequestDance",
+      listLlmProvidersRequest: "ListLlmProvidersApiRequestDance",
+      setActiveLlmProviderRequest: "SetActiveLlmProviderApiRequestDance",
       notFoundRequest: "NotFoundApiRequestDance",
       createProject: "CreateProjectApiDance",
       ensureSession: "EnsureSessionApiDance",

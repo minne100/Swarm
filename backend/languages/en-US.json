@@ -4,5 +4,11 @@
   "goal.project_title_label": "Project title: {{project}}",
   "goal.user_first_message_label": "User first message: {{message}}",
   "goal.seed_user_requirement": "Requirement: {{text}}",
-  "errors.request_failed": "Request failed: {{detail}}"
+  "errors.request_failed": "Request failed: {{detail}}",
+  "errors.unknown": "unknown error",
+  "errors.llm_insufficient_balance": "LLM request failed: insufficient balance or quota exhausted. Please top up or switch provider.",
+  "errors.llm_api_key_invalid": "LLM request failed: API key is invalid, expired, or unauthorized. Please check provider settings.",
+  "errors.llm_rate_limited": "LLM request failed: rate limit exceeded. Please retry later.",
+  "errors.llm_model_unavailable": "LLM request failed: model is unavailable or unsupported. Please switch model and retry.",
+  "errors.llm_network_error": "LLM request failed: network error. Please check connectivity or endpoint settings."
 }

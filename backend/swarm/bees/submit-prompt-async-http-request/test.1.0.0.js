@@ -4,6 +4,7 @@ import { submitPromptAsyncHttpRequestBee } from "./bee.1.0.0.js"
 test("submit-prompt-async-http-request bee contract", async () => {
   const started = []
   const context = {
+    state: { sessions: { s1: { id: "s1" } } },
     projectConfig: {
       api: {
         dances: {
@@ -25,9 +26,6 @@ test("submit-prompt-async-http-request bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    hasSession(sessionID) {
-      return sessionID === "s1"
     },
   }
   const bee = submitPromptAsyncHttpRequestBee(context)

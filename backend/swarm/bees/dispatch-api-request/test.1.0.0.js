@@ -14,6 +14,9 @@ test("dispatch-api-request bee contract", async () => {
           ensureSessionRequest: "EnsureSessionHttpRequestDance",
           submitPromptAsyncRequest: "SubmitPromptAsyncHttpRequestDance",
           listMessagesRequest: "ListMessagesApiRequestDance",
+          listProjectSessionsRequest: "ListProjectSessionsApiRequestDance",
+          listLlmProvidersRequest: "ListLlmProvidersApiRequestDance",
+          setActiveLlmProviderRequest: "SetActiveLlmProviderApiRequestDance",
           notFoundRequest: "NotFoundApiRequestDance",
         },
         honeyTypes: {
@@ -89,5 +92,28 @@ test("dispatch-api-request bee contract", async () => {
   expect(created.resultHoney.type).toBe("HttpApiResponseHoney")
   expect(created.resultHoney.payload.status).toBe(200)
   expect(created.resultHoney.payload.body.dance).toBe("CreateProjectHttpRequestDance")
-  expect(started.length).toBe(2)
+  const listLlm = await bee.execute(
+    {
+      type: "DispatchApiRequestHoney",
+      payload: {
+        method: "GET",
+        url: "http://127.0.0.1:3000/api/llm/providers",
+      },
+    },
+    runtimeContext,
+  )
+  expect(listLlm.resultHoney.payload.body.dance).toBe("ListLlmProvidersApiRequestDance")
+  const setActive = await bee.execute(
+    {
+      type: "DispatchApiRequestHoney",
+      payload: {
+        method: "POST",
+        url: "http://127.0.0.1:3000/api/llm/providers/active",
+        bodyText: JSON.stringify({ providerId: "2" }),
+      },
+    },
+    runtimeContext,
+  )
+  expect(setActive.resultHoney.payload.body.dance).toBe("SetActiveLlmProviderApiRequestDance")
+  expect(started.length).toBe(4)
 })

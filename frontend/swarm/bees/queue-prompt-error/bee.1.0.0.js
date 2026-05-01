@@ -42,6 +42,9 @@ export class QueuePromptErrorBee {
       "ai",
       t("errors.backend_request_failed", { detail }),
     )
+    if (typeof this.context.setSubmitState === "function") {
+      this.context.setSubmitState(projectId, false)
+    }
     const outputHoney = {
       type: "PromptFlowHoney",
       payload: { projectId },

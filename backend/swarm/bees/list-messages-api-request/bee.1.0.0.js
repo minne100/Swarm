@@ -52,7 +52,8 @@ export class ListMessagesApiRequestBee {
           status: 404,
         })
       }
-      if (!this.context.hasSession(sessionID)) {
+      const session = this.context.state?.sessions?.[sessionID]
+      if (!session) {
         const outputHoney = responseHoney(404, { error: `session not found: ${sessionID}` }, "json", corsHeaders())
         return this.context.resolveWithReport("ListMessagesApiRequestBee", "message session not found", outputHoney, {
           operation: "handle list messages request",
@@ -61,10 +62,12 @@ export class ListMessagesApiRequestBee {
       }
       const limitRaw = requestUrl.searchParams.get("limit")
       const limitValue = limitRaw ? Number(limitRaw) : 80
+      const count = Number.isInteger(limitValue) ? limitValue : 80
+      const messages = session.messages.length <= count ? [...session.messages] : session.messages.slice(session.messages.length - count)
       const outputHoney = responseHoney(
         200,
         {
-          messages: this.context.listMessages(sessionID, Number.isInteger(limitValue) ? limitValue : 80),
+          messages,
         },
         "json",
         corsHeaders(),

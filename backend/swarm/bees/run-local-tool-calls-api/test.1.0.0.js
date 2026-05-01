@@ -3,12 +3,33 @@ import { runLocalToolCallsApiBee } from "./bee.1.0.0.js"
 
 test("run-local-tool-calls-api bee executes mapped tool dances", async () => {
   const started = []
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        choices: [{ message: { content: "final assistant reply" } }],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    )
   const context = {
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          messages: [{ info: { role: "user" }, parts: [{ type: "text", text: "hello" }] }],
+        },
+      },
+    },
+    llmConfig: {
+      baseUrl: "https://example.test",
+      apiKey: "test-key",
+      model: "test-model",
+    },
     projectConfig: {
       localTools: {
         enabled: true,
         dances: {
-          listFiles: "ToolLocalListFilesApiDance",
+          runGoalDecompositionSkill: "ToolSkillGoalDecompositionApiDance",
         },
       },
     },
@@ -19,30 +40,34 @@ test("run-local-tool-calls-api bee executes mapped tool dances", async () => {
       return Promise.reject({ errorHoney, reportHoney: { type: "BeeReportHoney", payload: {} } })
     },
   }
-  const bee = runLocalToolCallsApiBee(context)
-  const output = await bee.execute(
-    {
-      type: "PromptTaskHoney",
-      payload: {
-        sessionID: "s1",
-        reply: '```tool_calls\n[{"name":"local.list_files","input":{"dir":"."}}]\n```',
+  try {
+    const bee = runLocalToolCallsApiBee(context)
+    const output = await bee.execute(
+      {
+        type: "PromptTaskHoney",
+        payload: {
+          sessionID: "s1",
+          reply: '```tool_calls\n[{"name":"skills.goal_decomposition.run","input":{"action":"prepare_goal_files"}}]\n```',
+        },
       },
-    },
-    {
-      startDance(name, options) {
-        started.push({ name, payload: options?.inputHoney?.payload })
-        return {
-          done: Promise.resolve({
-            type: "ToolCallResultHoney",
-            payload: { name: "local.list_files", ok: true, output: "a\nb" },
-          }),
-        }
+      {
+        startDance(name, options) {
+          started.push({ name, payload: options?.inputHoney?.payload })
+          return {
+            done: Promise.resolve({
+              type: "ToolCallResultHoney",
+              payload: { name: "skills.goal_decomposition.run", ok: true, output: "{\"version\":1}" },
+            }),
+          }
+        },
       },
-    },
-  )
-  expect(started.length).toBe(1)
-  expect(started[0].name).toBe("ToolLocalListFilesApiDance")
-  expect(output.resultHoney.type).toBe("PromptTaskHoney")
-  expect(output.resultHoney.payload.reply.includes("[local-tool-results]")).toBe(true)
-  expect(output.resultHoney.payload.toolCalls.length).toBe(1)
+    )
+    expect(started.length).toBe(1)
+    expect(started[0].name).toBe("ToolSkillGoalDecompositionApiDance")
+    expect(output.resultHoney.type).toBe("PromptTaskHoney")
+    expect(output.resultHoney.payload.reply).toBe("final assistant reply")
+    expect(output.resultHoney.payload.toolCalls.length).toBe(1)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })

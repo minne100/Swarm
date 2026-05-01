@@ -62,7 +62,7 @@ export class QueuePromptAsyncApiBee {
   async execute(honey, beeRuntimeContext) {
     const payload = honey?.payload || {}
     try {
-      const session = this.context.getSession(payload.sessionID)
+      const session = this.context.state?.sessions?.[payload.sessionID]
       if (!session) throw new Error(`session not found: ${payload.sessionID}`)
       if (!beeRuntimeContext || typeof beeRuntimeContext.startDance !== "function") {
         throw new Error("bee runtime context missing startDance")
@@ -93,8 +93,12 @@ export class QueuePromptAsyncApiBee {
         })
         .catch((error) => {
           const detail = toDetail(error)
-          if (this.context.hasSession(payload.sessionID)) {
-            this.context.appendAssistantMessage(payload.sessionID, `Request failed: ${detail}`)
+          if (this.context.state?.sessions?.[payload.sessionID]) {
+            this.context.state.sessions[payload.sessionID].messages.push({
+              id: `m-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`,
+              parts: [{ type: "text", text: `Request failed: ${detail}` }],
+              info: { role: "assistant", time: { created: Date.now() }, stream: { done: true } },
+            })
           }
         })
       const outputHoney = {

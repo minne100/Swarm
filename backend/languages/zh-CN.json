@@ -4,5 +4,11 @@
   "goal.project_title_label": "项目标题：{{project}}",
   "goal.user_first_message_label": "用户第一句话：{{message}}",
   "goal.seed_user_requirement": "需求：{{text}}",
-  "errors.request_failed": "请求失败：{{detail}}"
+  "errors.request_failed": "请求失败：{{detail}}",
+  "errors.unknown": "未知错误",
+  "errors.llm_insufficient_balance": "LLM 调用失败：账户余额不足或额度已用尽，请充值或更换可用提供商。",
+  "errors.llm_api_key_invalid": "LLM 调用失败：API Key 无效、过期或没有权限，请检查当前提供商配置。",
+  "errors.llm_rate_limited": "LLM 调用失败：请求过于频繁，已触发限流，请稍后重试。",
+  "errors.llm_model_unavailable": "LLM 调用失败：当前模型不可用或不支持，请切换模型后重试。",
+  "errors.llm_network_error": "LLM 调用失败：网络连接异常，请检查网络或服务地址后重试。"
 }

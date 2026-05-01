@@ -18,6 +18,27 @@ test("call-llm-api bee contract", async () => {
     )
   }
   const context = {
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          messages: [
+            { parts: [{ type: "text", text: "hello" }], info: { role: "user" } },
+            {
+              parts: [
+                {
+                  type: "file",
+                  filename: "payload.json",
+                  mime: "application/json",
+                  url: `data:application/json;base64,${Buffer.from(JSON.stringify({ a: 1, b: "x" })).toString("base64")}`,
+                },
+              ],
+              info: { role: "user" },
+            },
+          ],
+        },
+      },
+    },
     llmConfig: {
       baseUrl: "https://example.com",
       apiKey: "test",
@@ -34,27 +55,6 @@ test("call-llm-api bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    getSession() {
-      return {
-        messages: [
-          {
-            parts: [{ type: "text", text: "hello" }],
-            info: { role: "user" },
-          },
-          {
-            parts: [
-              {
-                type: "file",
-                filename: "payload.json",
-                mime: "application/json",
-                url: `data:application/json;base64,${Buffer.from(JSON.stringify({ a: 1, b: "x" })).toString("base64")}`,
-              },
-            ],
-            info: { role: "user" },
-          },
-        ],
-      }
     },
   }
   const bee = callLlmApiBee(context)
@@ -93,6 +93,33 @@ test("call-llm-api sends image and audio parts when multimodal is enabled", asyn
     )
   }
   const context = {
+    state: {
+      sessions: {
+        s2: {
+          id: "s2",
+          messages: [
+            {
+              parts: [
+                { type: "text", text: "look and listen" },
+                {
+                  type: "file",
+                  filename: "cat.png",
+                  mime: "image/png",
+                  url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6r9nQAAAAASUVORK5CYII=",
+                },
+                {
+                  type: "file",
+                  filename: "voice.wav",
+                  mime: "audio/wav",
+                  url: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA",
+                },
+              ],
+              info: { role: "user" },
+            },
+          ],
+        },
+      },
+    },
     llmConfig: {
       baseUrl: "https://example.com",
       apiKey: "test",
@@ -112,30 +139,6 @@ test("call-llm-api sends image and audio parts when multimodal is enabled", asyn
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    getSession() {
-      return {
-        messages: [
-          {
-            parts: [
-              { type: "text", text: "look and listen" },
-              {
-                type: "file",
-                filename: "cat.png",
-                mime: "image/png",
-                url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6r9nQAAAAASUVORK5CYII=",
-              },
-              {
-                type: "file",
-                filename: "voice.wav",
-                mime: "audio/wav",
-                url: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA",
-              },
-            ],
-            info: { role: "user" },
-          },
-        ],
-      }
     },
   }
   const bee = callLlmApiBee(context)
@@ -182,8 +185,16 @@ test("call-llm-api consumes streaming chunks and updates assistant stream messag
       },
     )
   }
-  const updates = []
+  const streamState = {
+    sessions: {
+      s3: {
+        id: "s3",
+        messages: [{ parts: [{ type: "text", text: "hi" }], info: { role: "user" } }],
+      },
+    },
+  }
   const context = {
+    state: streamState,
     llmConfig: {
       baseUrl: "https://example.com",
       apiKey: "test",
@@ -202,19 +213,6 @@ test("call-llm-api consumes streaming chunks and updates assistant stream messag
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
     },
-    getSession() {
-      return {
-        messages: [{ parts: [{ type: "text", text: "hi" }], info: { role: "user" } }],
-      }
-    },
-    beginAssistantStream() {
-      return { id: "m-stream" }
-    },
-    updateAssistantStream(_sessionID, messageID, text) {
-      updates.push({ messageID, text })
-    },
-    finishAssistantStream() {},
-    failAssistantStream() {},
   }
   const bee = callLlmApiBee(context)
   const output = await bee
@@ -227,8 +225,8 @@ test("call-llm-api consumes streaming chunks and updates assistant stream messag
     })
   expect(output.resultHoney.type).toBe("PromptTaskHoney")
   expect(output.resultHoney.payload.reply).toBe("Hello")
-  expect(output.resultHoney.payload.messageID).toBe("m-stream")
-  expect(updates.length).toBe(2)
-  expect(updates[0].text).toBe("Hel")
-  expect(updates[1].text).toBe("Hello")
+  expect(typeof output.resultHoney.payload.messageID).toBe("string")
+  const assistant = streamState.sessions.s3.messages.find((item) => item?.info?.role === "assistant")
+  expect(Boolean(assistant)).toBe(true)
+  expect(assistant.parts[0].text).toBe("Hello")
 })

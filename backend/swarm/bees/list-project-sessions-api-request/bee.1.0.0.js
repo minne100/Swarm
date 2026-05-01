@@ -1,3 +1,6 @@
+import path from "node:path"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
+
 function toDetail(error) {
   if (error instanceof Error) return error.message
   return String(error)
@@ -53,7 +56,19 @@ export class ListProjectSessionsApiRequestBee {
       const offsetRaw = Number(requestUrl.searchParams.get("offset") || "0")
       const limit = Number.isInteger(limitRaw) ? limitRaw : 5
       const offset = Number.isInteger(offsetRaw) ? offsetRaw : 0
-      const result = this.context.listProjectSessions(projectId, limit, offset)
+      const root = path.resolve(this.context.runtime.projectsRoot, projectId, "sessions")
+      if (!existsSync(root)) {
+        const outputHoney = responseHoney(200, { sessions: [], nextOffset: offset, hasMore: false }, "json", corsHeaders())
+        return this.context.resolveWithReport("ListProjectSessionsApiRequestBee", "list project sessions handled", outputHoney)
+      }
+      const files = readdirSync(root).filter((name) => name.endsWith(".json")).sort((a, b) => b.localeCompare(a, "en"))
+      const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0
+      const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 5
+      const selected = files
+        .slice(safeOffset, safeOffset + safeLimit)
+        .map((name) => JSON.parse(readFileSync(path.resolve(root, name), "utf8")))
+      const nextOffset = safeOffset + selected.length
+      const result = { sessions: selected, nextOffset, hasMore: nextOffset < files.length }
       const outputHoney = responseHoney(200, result, "json", corsHeaders())
       return this.context.resolveWithReport("ListProjectSessionsApiRequestBee", "list project sessions handled", outputHoney)
     } catch (error) {

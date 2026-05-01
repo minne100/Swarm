@@ -50,6 +50,22 @@ body {
   padding: 0 8px 4px;
 }
 
+.provider-label {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.provider-select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #1b2231;
+  color: var(--text);
+  border-radius: 10px;
+  height: 36px;
+  padding: 0 10px;
+}
+
 .add-project {
   width: 100%;
   border: 1px solid var(--line);
@@ -206,6 +222,16 @@ button.primary {
 button.primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+button.primary.is-stop {
+  background: #d64545;
+  border-color: #d64545;
+}
+
+button.primary.is-stop:hover {
+  background: #bf3b3b;
+  border-color: #bf3b3b;
 }
 
 @media (max-width: 900px) {

@@ -1,5 +1,59 @@
+import path from "node:path"
+import { mkdirSync, writeFileSync } from "node:fs"
+
 function normalizeValue(value) {
   return value === undefined ? null : value
+}
+
+function textPart(text) {
+  return [{ type: "text", text: typeof text === "string" ? text : "" }]
+}
+
+function textFromParts(parts) {
+  if (!Array.isArray(parts)) return ""
+  return parts
+    .map((part) => (part?.type === "text" && typeof part?.text === "string" ? part.text : ""))
+    .join("\n")
+}
+
+function getSession(state, sessionID) {
+  return state?.sessions?.[sessionID] || null
+}
+
+function getSessionMessage(state, sessionID, messageID) {
+  const session = getSession(state, sessionID)
+  if (!session) return null
+  return session.messages.find((item) => item.id === messageID) || null
+}
+
+function appendAssistantMessage(state, runtime, sessionID, replyText) {
+  const session = getSession(state, sessionID)
+  if (!session) throw new Error(`session not found: ${sessionID}`)
+  const message = {
+    id: `m-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`,
+    parts: textPart(replyText),
+    info: { role: "assistant", time: { created: Date.now() }, stream: { done: true } },
+  }
+  session.messages.push(message)
+  const root = path.resolve(runtime.projectsRoot, session.projectId, "sessions")
+  mkdirSync(root, { recursive: true })
+  const createdAt = Date.now()
+  const recordId = `${createdAt}-${Math.floor(Math.random() * 10_000_000)}`
+  const userMessage = [...session.messages].reverse().find((item) => item?.info?.role === "user")
+  writeFileSync(
+    path.resolve(root, `${recordId}.json`),
+    JSON.stringify({
+      id: recordId,
+      sessionID,
+      projectId: session.projectId,
+      createdAt,
+      messages: [
+        { role: "user", content: textFromParts(userMessage?.parts) },
+        { role: "assistant", content: typeof replyText === "string" ? replyText : "" },
+      ],
+    }),
+  )
+  return message
 }
 
 function buildSuccessDetail(inputHoney, outputHoney, messageID) {
@@ -57,11 +111,8 @@ export class QueueAssistantMessageApiBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     try {
-      const existingMessage =
-        payload.messageID && typeof this.context.getSessionMessage === "function"
-          ? this.context.getSessionMessage(payload.sessionID, payload.messageID)
-          : null
-      const message = existingMessage || this.context.appendAssistantMessage(payload.sessionID, payload.reply)
+      const existingMessage = payload.messageID ? getSessionMessage(this.context.state, payload.sessionID, payload.messageID) : null
+      const message = existingMessage || appendAssistantMessage(this.context.state, this.context.runtime, payload.sessionID, payload.reply)
       const outputHoney = {
         type: "PromptResultHoney",
         payload: {

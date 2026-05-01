@@ -1,0 +1,24 @@
+{
+  "name": "BootstrapRuntimeDance",
+  "version": "1.0.0",
+  "description": "Initialize backend runtime state",
+  "input": "RuntimeBootstrapHoney",
+  "output": "RuntimeReadyHoney",
+  "bees": [
+    {
+      "name": "BootstrapRuntimeBee",
+      "version": "1.0.0",
+      "alias": "bootstrap-runtime"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "bootstrap-runtime",
+      "alias": "bootstrap-runtime",
+      "description": "Resolve llm providers and runtime defaults",
+      "input": "RuntimeBootstrapHoney",
+      "output": "RuntimeReadyHoney"
+    }
+  ]
+}

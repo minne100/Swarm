@@ -5,6 +5,7 @@ test("queue-prompt-async-api bee contract", async () => {
   const started = []
   const session = { pending: Promise.resolve() }
   const context = {
+    state: { sessions: { s1: session } },
     projectConfig: {
       api: {
         dances: { submitPrompt: "SubmitPromptApiDance" },
@@ -23,13 +24,6 @@ test("queue-prompt-async-api bee contract", async () => {
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
     },
-    getSession() {
-      return session
-    },
-    hasSession() {
-      return true
-    },
-    appendAssistantMessage() {},
   }
   const bee = queuePromptAsyncApiBee(context)
   const output = await bee.execute(

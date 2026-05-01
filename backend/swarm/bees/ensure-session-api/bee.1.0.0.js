@@ -1,5 +1,54 @@
+import path from "node:path"
+import { mkdirSync } from "node:fs"
+
 function normalizeValue(value) {
   return value === undefined ? null : value
+}
+
+function ensureProjectDirectory(projectsRoot, projectName) {
+  const name = typeof projectName === "string" ? projectName.trim() : ""
+  if (!name) throw new Error("project name is required")
+  if (name === "." || name === ".." || /[\\/]/.test(name)) throw new Error(`invalid project name: ${projectName}`)
+  const target = path.resolve(projectsRoot, name)
+  const relative = path.relative(projectsRoot, target)
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`invalid project name: ${projectName}`)
+  mkdirSync(target, { recursive: true })
+  mkdirSync(path.resolve(target, "sessions"), { recursive: true })
+  return target
+}
+
+function createProject(state, runtime, name, projectId) {
+  const projectName = typeof name === "string" && name.trim() ? name.trim() : `Project ${state.projects.length + 1}`
+  const id = typeof projectId === "string" && projectId ? projectId : projectName
+  const existing = state.projects.find((item) => item.id === id)
+  if (existing) return existing
+  ensureProjectDirectory(runtime.projectsRoot, projectName)
+  const project = { id, name: projectName, createdAt: Date.now() }
+  state.projects.unshift(project)
+  return project
+}
+
+function ensureSession(state, runtime, projectId, title) {
+  const id =
+    typeof projectId === "string" && projectId
+      ? projectId
+      : typeof title === "string" && title.trim()
+        ? title.trim()
+        : `p-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`
+  const linkedSessionID = state.sessionByProject[id]
+  if (linkedSessionID && state.sessions[linkedSessionID]) return state.sessions[linkedSessionID]
+  const project = state.projects.find((item) => item.id === id) || createProject(state, runtime, title, id)
+  const session = {
+    id: `s-${Date.now()}-${Math.floor(Math.random() * 10_000_000)}`,
+    projectId: project.id,
+    title: typeof title === "string" && title.trim() ? title.trim() : project.name,
+    createdAt: Date.now(),
+    messages: [],
+    pending: Promise.resolve(),
+  }
+  state.sessions[session.id] = session
+  state.sessionByProject[project.id] = session.id
+  return session
 }
 
 function buildSuccessDetail(inputHoney, outputHoney, session) {
@@ -57,7 +106,7 @@ export class EnsureSessionApiBee {
   async execute(honey) {
     const payload = honey?.payload || {}
     try {
-      const session = this.context.ensureSession(payload.projectId, payload.title)
+      const session = ensureSession(this.context.state, this.context.runtime, payload.projectId, payload.title)
       const outputHoney = {
         type: "SessionReadyHoney",
         payload: {

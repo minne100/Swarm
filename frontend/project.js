@@ -1,5 +1,11 @@
 export const projectBeeDefinitions = [
   {
+    name: "InitializeProjectUiBee",
+    version: "1.0.0",
+    modulePath: "./swarm/bees/initialize-project-ui/bee.1.0.0.js",
+    factoryExport: "initializeProjectUiBee",
+  },
+  {
     name: "BuildPromptPartsBee",
     version: "1.0.0",
     modulePath: "./swarm/bees/build-prompt-parts/bee.1.0.0.js",
@@ -123,12 +129,14 @@ export const projectConfig = {
   ui: {
     elementIds: {
       projectListEl: "project-list",
+      llmProviderEl: "llm-provider",
       messagesEl: "messages",
       addProjectBtn: "add-project",
       composerEl: "composer",
       promptEl: "prompt",
       fileInputEl: "file-input",
       attachBtnEl: "attach-btn",
+      submitBtnEl: "submit-btn",
       attachmentsEl: "attachments",
     },
     dances: {
@@ -147,6 +155,8 @@ export const projectConfig = {
   initialState: {
     projects: [],
     activeProjectId: "",
+    llmProviders: [],
+    activeLlmProviderId: "",
     sessionIDs: {},
     messages: {},
     files: [],

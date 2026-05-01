@@ -74,13 +74,13 @@ trigger: /goal-decomposition
    - 提交时间
    - 本次生成的拆解文件路径
 4. 运行脚本生成本次版本信息（不要手算版本号）：
-   - `python Skills/goal-decomposition/scripts/prepare_goal_files.py --project-root "<项目目录>"`
+   - `bun Skills/goal-decomposition/scripts/prepare_goal_files.js --project-root "<项目目录>"`
 5. 以用户当前使用语言生成一份 **Markdown 拆解文档**，保存到：
    - `项目根目录/docs/goal-decomposition/`
    - 文件名：`{yyyymmdd_hhmmss}_version_{X}.md`
    - 编码：UTF-8
 6. 在项目根目录 `README.md` 追加记录（用脚本，不手写）：
-   - `python Skills/goal-decomposition/scripts/update_readme_log.py --project-root "<项目目录>" --change-note "<本次修改意见或初始需求摘要>" --plan-file "<拆解文档路径>" --version <X> --status "待确认"`
+   - `bun Skills/goal-decomposition/scripts/update_readme_log.js --project-root "<项目目录>" --change-note "<本次修改意见或初始需求摘要>" --plan-file "<拆解文档路径>" --version <X> --status "待确认"`
 7. 先在普通回复中输出拆解文档全文，并附文件路径。
 8. 紧接着输出文本提示（语言跟随用户）：
    - 中文：`如果还需调整，请输入修改意见；否则请输入 OK。`
@@ -91,7 +91,7 @@ trigger: /goal-decomposition
 10. 如果用户输入 `OK`：
    - 要求用户输入姓名用于签名
    - 运行签名脚本写入当前版本文档：
-     - `python Skills/goal-decomposition/scripts/sign_plan.py --plan-file "<当前版本文档路径>" --sign-name "<姓名>"`
+     - `bun Skills/goal-decomposition/scripts/sign_plan.js --plan-file "<当前版本文档路径>" --sign-name "<姓名>"`
    - 更新 `README.md` 状态为 `已确认`
    - 注意：**签名不持久保存到系统状态**，每次确认都必须重新询问姓名
 
@@ -145,7 +145,7 @@ trigger: /goal-decomposition
 澄清阶段写入示例（尚未出文档）：
 
 ```bash
-python Skills/goal-decomposition/scripts/update_readme_log.py \
+bun Skills/goal-decomposition/scripts/update_readme_log.js \
   --project-root "<项目目录>" \
   --change-note "澄清第1轮：已确认xxx，待确认yyy" \
   --status "澄清中" \
@@ -252,10 +252,10 @@ python Skills/goal-decomposition/scripts/update_readme_log.py \
 
 ## 捆绑资源（必须使用）
 
-- `scripts/prepare_goal_files.py`：创建 `docs/goal-decomposition` 并计算版本号、输出新文件路径。
-- `scripts/update_readme_log.py`：向项目 `README.md` 追加需求记录。
-- `scripts/sign_plan.py`：给当前版本文档写入签名和签名时间。
-- `scripts/build_confirmation_prompt.py`：可选脚本；仅在必须生成确认提示文案时使用。
+- `scripts/prepare_goal_files.js`：创建 `docs/goal-decomposition` 并计算版本号、输出新文件路径。
+- `scripts/update_readme_log.js`：向项目 `README.md` 追加需求记录。
+- `scripts/sign_plan.js`：给当前版本文档写入签名和签名时间。
+- `scripts/build_confirmation_prompt.js`：可选脚本；仅在必须生成确认提示文案时使用。
 - `templates/decomposition_template.md`：拆解文档模板骨架（根据用户语言填充）。
 
 ## 一段示例（风格参考）

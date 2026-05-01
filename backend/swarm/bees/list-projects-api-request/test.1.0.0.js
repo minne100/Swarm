@@ -1,16 +1,19 @@
 import { expect, test } from "bun:test"
+import path from "node:path"
+import { mkdirSync } from "node:fs"
 import { listProjectsApiRequestBee } from "./bee.1.0.0.js"
 
 test("list-projects-api-request bee contract", async () => {
+  const projectsRoot = path.resolve("/tmp", "swarm-test-list-projects")
+  mkdirSync(path.resolve(projectsRoot, "demo"), { recursive: true })
   const context = {
+    state: { projects: [] },
+    runtime: { projectsRoot },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    listProjects() {
-      return [{ id: "p1", name: "demo" }]
     },
   }
   const bee = listProjectsApiRequestBee(context)
@@ -23,5 +26,5 @@ test("list-projects-api-request bee contract", async () => {
   })
   expect(output.resultHoney.type).toBe("HttpApiResponseHoney")
   expect(output.resultHoney.payload.status).toBe(200)
-  expect(output.resultHoney.payload.body.projects.length).toBe(1)
+  expect(output.resultHoney.payload.body.projects.some((item) => item.id === "demo")).toBe(true)
 })

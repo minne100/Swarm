@@ -1,0 +1,25 @@
+{
+  "name": "ListLlmProvidersApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle list llm providers request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "ListLlmProvidersApiRequestBee",
+      "version": "1.0.0",
+      "alias": "list-llm-providers-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-list-llm-providers",
+      "alias": "list-llm-providers-api-request",
+      "description": "Return configured llm providers from backend state",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}
+

@@ -1,0 +1,25 @@
+{
+  "name": "SetActiveLlmProviderApiRequestDance",
+  "version": "1.0.0",
+  "description": "Handle set active llm provider request",
+  "input": "DispatchApiRequestHoney",
+  "output": "HttpApiResponseHoney",
+  "bees": [
+    {
+      "name": "SetActiveLlmProviderApiRequestBee",
+      "version": "1.0.0",
+      "alias": "set-active-llm-provider-api-request"
+    }
+  ],
+  "dances": [],
+  "steps": [
+    {
+      "id": "handle-set-active-llm-provider",
+      "alias": "set-active-llm-provider-api-request",
+      "description": "Set current active llm provider in backend state",
+      "input": "DispatchApiRequestHoney",
+      "output": "HttpApiResponseHoney"
+    }
+  ]
+}
+

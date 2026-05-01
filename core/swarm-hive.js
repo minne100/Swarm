@@ -967,9 +967,11 @@ export async function createSwarmRuntime(program, options = {}) {
     },
   }
   if (typeof program.bind === "function") program.bind(runtime)
-  if (options.autoBootstrap !== false) {
-    const bootstrapName = resolveBootstrapName(program)
-    if (bootstrapName) runtime.startDance(bootstrapName, resolveBootstrapInput(program))
+  const bootstrapName = options.autoBootstrap === false ? "" : resolveBootstrapName(program)
+  const bootstrapRun = bootstrapName ? runtime.startDance(bootstrapName, resolveBootstrapInput(program)) : null
+  if (options.awaitBootstrap && bootstrapName) {
+    if (!bootstrapRun) throw new Error(`Dance 启动失败: ${bootstrapName}`)
+    await bootstrapRun.done
   }
   return runtime
 }
@@ -977,114 +979,6 @@ export async function createSwarmRuntime(program, options = {}) {
 export async function autoBoot(programFactory, options = {}) {
   const program = typeof programFactory === "function" ? programFactory() : programFactory
   return createSwarmRuntime(program, options)
-}
-
-function cloneValue(value) {
-  if (typeof structuredClone === "function") return structuredClone(value)
-  return JSON.parse(JSON.stringify(value))
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-function renderMessageTemplate(template, vars = {}) {
-  return String(template || "").replace(/\{\{(\w+)\}\}/g, (_m, key) =>
-    vars[key] === undefined || vars[key] === null ? "" : String(vars[key]),
-  )
-}
-
-function createTranslator(messages = {}) {
-  return (key, vars = {}) => {
-    const template = messages[key]
-    if (typeof template !== "string") return key
-    return renderMessageTemplate(template, vars)
-  }
-}
-
-function listFromMessagesPayload(payload) {
-  if (Array.isArray(payload)) return payload
-  if (payload && Array.isArray(payload.messages)) return payload.messages
-  return []
-}
-
-function messagesFromSessionRecords(records, newestFirst = false) {
-  const list = Array.isArray(records) ? records : []
-  const ordered = newestFirst ? [...list].reverse() : list
-  return ordered.flatMap((record) => {
-    const messages = Array.isArray(record?.messages) ? record.messages : []
-    return messages
-      .map((message) => {
-        const role = message?.role === "assistant" ? "ai" : message?.role === "user" ? "user" : ""
-        const content = typeof message?.content === "string" ? message.content : ""
-        if (!role || !content) return null
-        return { role, content }
-      })
-      .filter(Boolean)
-  })
-}
-
-function textFromMessage(msg) {
-  const parts = Array.isArray(msg?.parts) ? msg.parts : []
-  const texts = parts
-    .filter((part) => part && part.type === "text" && typeof part.text === "string")
-    .map((part) => part.text.trim())
-    .filter(Boolean)
-  return texts.join("\n\n")
-}
-
-function roleOf(msg) {
-  if (msg?.info?.role) return msg.info.role
-  if (msg?.role) return msg.role
-  return ""
-}
-
-function createdAt(msg) {
-  if (typeof msg?.info?.time?.created === "number") return msg.info.time.created
-  if (typeof msg?.time?.created === "number") return msg.time.created
-  return 0
-}
-
-function isStreamDone(msg) {
-  if (typeof msg?.info?.stream?.done === "boolean") return msg.info.stream.done
-  return true
-}
-
-function findAssistantReplyState(messages, since) {
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const msg = messages[i]
-    if (roleOf(msg) !== "assistant") continue
-    if (createdAt(msg) < since) continue
-    const text = textFromMessage(msg)
-    if (!text && !isStreamDone(msg)) return { reply: "", done: false }
-    if (text) return { reply: text, done: isStreamDone(msg) }
-    if (isStreamDone(msg)) return { reply: "", done: true }
-  }
-  return { reply: "", done: false }
-}
-
-function fileIdentity(file) {
-  if (typeof file === "string") return `path:${file}`
-  if (!file || typeof file !== "object") return ""
-  const name = typeof file.name === "string" ? file.name : ""
-  const size = typeof file.size === "number" ? String(file.size) : ""
-  const type = typeof file.type === "string" ? file.type : ""
-  const lastModified = typeof file.lastModified === "number" ? String(file.lastModified) : ""
-  return `file:${name}|${size}|${type}|${lastModified}`
-}
-
-function mergeAttachmentFiles(existingFiles, incomingFiles) {
-  const all = [...(Array.isArray(existingFiles) ? existingFiles : []), ...(Array.isArray(incomingFiles) ? incomingFiles : [])]
-  const seen = new Set()
-  return all.filter((file) => {
-    const key = fileIdentity(file)
-    if (!key) return false
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
 }
 
 function buildBeeReportHoney(beeName, status, summary, detail = {}) {
@@ -1163,23 +1057,6 @@ function ensureBeeContract(descriptor, instance) {
   return instance
 }
 
-function createContractHelpers() {
-  return {
-    resolveWithReport(beeName, summary, resultHoney, detail = {}) {
-      return Promise.resolve({
-        resultHoney,
-        reportHoney: buildBeeReportHoney(beeName, "success", summary, detail),
-      })
-    },
-    rejectWithReport(beeName, summary, errorHoney, detail = {}) {
-      return Promise.reject({
-        errorHoney,
-        reportHoney: buildBeeReportHoney(beeName, "error", summary, detail),
-      })
-    },
-  }
-}
-
 function registerLoadedBees(hive, context, beeDescriptors) {
   beeDescriptors.forEach((descriptor) => {
     if (typeof descriptor.create !== "function") throw new Error(`Bee 工厂缺失: ${descriptor.name}@${descriptor.version}`)
@@ -1193,450 +1070,10 @@ function fileUrlToPath(url) {
   return path
 }
 
-function resolveElement(root, id) {
-  const node = root.getElementById(id)
-  if (!node) throw new Error(`缺少页面元素: #${id}`)
-  return node
-}
-
-function createBrowserElements(projectConfig, rootDocument = document) {
-  const ids = projectConfig?.ui?.elementIds || {}
-  return {
-    projectListEl: resolveElement(rootDocument, ids.projectListEl),
-    messagesEl: resolveElement(rootDocument, ids.messagesEl),
-    addProjectBtn: resolveElement(rootDocument, ids.addProjectBtn),
-    composerEl: resolveElement(rootDocument, ids.composerEl),
-    promptEl: resolveElement(rootDocument, ids.promptEl),
-    fileInputEl: resolveElement(rootDocument, ids.fileInputEl),
-    attachBtnEl: resolveElement(rootDocument, ids.attachBtnEl),
-    attachmentsEl: resolveElement(rootDocument, ids.attachmentsEl),
-  }
-}
-
-function createBrowserProjectContext(projectConfig, elements, options = {}) {
-  const state = cloneValue(projectConfig.initialState)
-  const t = createTranslator(options.messages || projectConfig?.i18n?.messages || {})
-  if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
-    state.streamingAssistantByProject = {}
-  }
-  if (!state.projectSessionOffsets || typeof state.projectSessionOffsets !== "object") {
-    state.projectSessionOffsets = {}
-  }
-  if (!state.projectSessionHasMore || typeof state.projectSessionHasMore !== "object") {
-    state.projectSessionHasMore = {}
-  }
-  if (!state.loadingOlderSessions || typeof state.loadingOlderSessions !== "object") {
-    state.loadingOlderSessions = {}
-  }
-  const apiBase = options.apiBase || projectConfig?.api?.base || "http://127.0.0.1:3000"
-  const pollIntervalMs =
-    Number.isInteger(options.pollIntervalMs) ? options.pollIntervalMs : projectConfig?.api?.pollIntervalMs ?? 1200
-  const pollTimeoutMs =
-    Number.isInteger(options.pollTimeoutMs) ? options.pollTimeoutMs : projectConfig?.api?.pollTimeoutMs ?? 60000
-  const helpers = createContractHelpers()
-  const context = {
-    state,
-    elements,
-    t,
-    startDance: null,
-    resolveWithReport: helpers.resolveWithReport,
-    rejectWithReport: helpers.rejectWithReport,
-    ensureProjectMessages(projectId) {
-      if (!state.messages[projectId]) state.messages[projectId] = []
-    },
-    pushMessage(projectId, role, content) {
-      context.ensureProjectMessages(projectId)
-      state.messages[projectId].push({ role, content })
-    },
-    updateAssistantStream(projectId, content, done = false) {
-      context.ensureProjectMessages(projectId)
-      const mappedIndex = state.streamingAssistantByProject[projectId]
-      const hasMappedIndex = Number.isInteger(mappedIndex) && mappedIndex >= 0
-      const list = state.messages[projectId]
-      const targetIndex = hasMappedIndex ? mappedIndex : list.length
-      if (!hasMappedIndex) {
-        list.push({ role: "ai", content: "", streaming: true })
-        state.streamingAssistantByProject[projectId] = list.length - 1
-      }
-      const safeIndex = Number.isInteger(state.streamingAssistantByProject[projectId])
-        ? state.streamingAssistantByProject[projectId]
-        : targetIndex
-      const target = list[safeIndex]
-      if (!target) return
-      target.role = "ai"
-      target.content = typeof content === "string" ? content : ""
-      target.streaming = !done
-      if (done) {
-        delete state.streamingAssistantByProject[projectId]
-      }
-    },
-    consumeAssistantStream(projectId, reply) {
-      if (!projectId) return false
-      const mappedIndex = state.streamingAssistantByProject[projectId]
-      if (!Number.isInteger(mappedIndex) || mappedIndex < 0) return false
-      const list = state.messages[projectId] || []
-      const target = list[mappedIndex]
-      if (!target) {
-        delete state.streamingAssistantByProject[projectId]
-        return false
-      }
-      target.role = "ai"
-      target.content = typeof reply === "string" ? reply : ""
-      target.streaming = false
-      delete state.streamingAssistantByProject[projectId]
-      return true
-    },
-    renderProjectList() {
-      elements.projectListEl.innerHTML = ""
-      state.projects.forEach((project) => {
-        const button = document.createElement("button")
-        button.type = "button"
-        button.className = `project-item${project.id === state.activeProjectId ? " active" : ""}`
-        button.textContent = project.name
-        button.addEventListener("click", () => {
-          if (!context.startDance) return
-          context.startDance(projectConfig.ui.dances.selectProject, {
-            type: projectConfig.ui.honeyTypes.selectProject,
-            payload: {
-              projectId: project.id,
-            },
-          })
-        })
-        elements.projectListEl.appendChild(button)
-      })
-    },
-    renderMessages() {
-      const list = state.messages[state.activeProjectId] || []
-      elements.messagesEl.innerHTML = ""
-      list.forEach((msg) => {
-        const item = document.createElement("div")
-        item.className = `msg ${msg.role === "user" ? "user" : "ai"}`
-        item.textContent = msg.content
-        elements.messagesEl.appendChild(item)
-      })
-      elements.messagesEl.scrollTop = elements.messagesEl.scrollHeight
-    },
-    renderAttachments() {
-      elements.attachmentsEl.innerHTML = ""
-      state.files.forEach((file) => {
-        const tag = document.createElement("span")
-        tag.className = "file-tag"
-        tag.textContent = file.name
-        elements.attachmentsEl.appendChild(tag)
-      })
-    },
-    syncFiles(files) {
-      state.files = mergeAttachmentFiles(state.files, Array.from(files || []))
-    },
-    clearComposer() {
-      elements.promptEl.value = ""
-      state.files = []
-      elements.fileInputEl.value = ""
-    },
-    activeProject() {
-      return state.projects.find((item) => item.id === state.activeProjectId)
-    },
-    async request(path, init = {}) {
-      const res = await fetch(`${apiBase}${path}`, {
-        ...init,
-        headers: {
-          "Content-Type": "application/json",
-          ...(init.headers || {}),
-        },
-      })
-      const text = await res.text()
-      if (!res.ok) throw new Error(text || `${res.status} ${res.statusText}`)
-      if (!text) return null
-      try {
-        return JSON.parse(text)
-      } catch {
-        return text
-      }
-    },
-    async ensureSession(projectId, projectName) {
-      const existing = state.sessionIDs[projectId]
-      if (existing) return existing
-      const created = await context.request("/session", {
-        method: "POST",
-        body: JSON.stringify({ projectId, title: projectName }),
-      })
-      const sessionID = created?.id
-      if (!sessionID) throw new Error("创建会话失败：后端未返回 sessionID")
-      state.sessionIDs[projectId] = sessionID
-      return sessionID
-    },
-    fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result || ""))
-        reader.onerror = () => reject(new Error(t("errors.read_attachment_failed", { name: file.name })))
-        reader.readAsDataURL(file)
-      })
-    },
-    async sendPromptAsync(sessionID, parts) {
-      await context.request(`/session/${sessionID}/prompt_async`, {
-        method: "POST",
-        body: JSON.stringify({ parts }),
-      })
-    },
-    async waitAssistantReply(sessionID, since, projectId) {
-      const deadline = Date.now() + pollTimeoutMs
-      while (Date.now() < deadline) {
-        const payload = await context.request(`/session/${sessionID}/message?limit=80`)
-        const messages = listFromMessagesPayload(payload)
-        const hit = findAssistantReplyState(messages, since)
-        if (projectId && hit.reply) {
-          context.updateAssistantStream(projectId, hit.reply, hit.done)
-          context.renderMessages()
-        }
-        if (hit.done && hit.reply) return hit.reply
-        await sleep(pollIntervalMs)
-      }
-      if (projectId) {
-        const mappedIndex = state.streamingAssistantByProject[projectId]
-        if (Number.isInteger(mappedIndex) && mappedIndex >= 0) {
-          const message = state.messages[projectId]?.[mappedIndex]
-          if (message?.content) {
-            context.consumeAssistantStream(projectId, message.content)
-            context.renderMessages()
-            return message.content
-          }
-        }
-      }
-      return ""
-    },
-    async loadProjectSessions(projectId, appendOlder = false) {
-      if (!projectId) return
-      const currentOffset = Number(state.projectSessionOffsets[projectId] || 0)
-      const offset = appendOlder ? currentOffset : 0
-      const payload = await context.request(
-        `/api/projects/${encodeURIComponent(projectId)}/sessions?limit=5&offset=${offset}`,
-      )
-      const records = Array.isArray(payload?.sessions) ? payload.sessions : []
-      const incoming = messagesFromSessionRecords(records, true)
-      const existing = Array.isArray(state.messages[projectId]) ? state.messages[projectId] : []
-      state.messages[projectId] = appendOlder ? [...incoming, ...existing] : incoming
-      if (!appendOlder && state.messages[projectId].length === 0) {
-        state.messages[projectId] = [{ role: "ai", content: t("ui.welcome.describe_requirement") }]
-      }
-      state.projectSessionOffsets[projectId] = Number(payload?.nextOffset || offset + records.length)
-      state.projectSessionHasMore[projectId] = Boolean(payload?.hasMore)
-    },
-    async loadOlderProjectSessions(projectId) {
-      if (!projectId) return false
-      if (!state.projectSessionHasMore[projectId]) return false
-      if (state.loadingOlderSessions[projectId]) return false
-      state.loadingOlderSessions[projectId] = true
-      try {
-        await context.loadProjectSessions(projectId, true)
-        return true
-      } finally {
-        state.loadingOlderSessions[projectId] = false
-      }
-    },
-  }
-  return context
-}
-
-function requestProjectName(context) {
-  const suggested = `Project ${context.state.projects.length + 1}`
-  if (typeof globalThis.prompt !== "function") return suggested
-  while (true) {
-    const raw = globalThis.prompt(context.t("ui.prompt.project_name"), suggested)
-    if (raw === null) return null
-    const value = raw.trim()
-    if (value) return value
-    if (typeof globalThis.alert === "function") {
-      globalThis.alert(context.t("ui.alert.project_name_empty"))
-    }
-  }
-}
-
-function bindBrowserProjectHandlers(projectConfig, context, startDance) {
-  const elements = context.elements
-  context.startDance = startDance
-  elements.addProjectBtn.addEventListener("click", () => {
-    const name = requestProjectName(context)
-    if (!name) return
-    startDance(projectConfig.ui.dances.addProject, {
-      type: projectConfig.ui.honeyTypes.addProject,
-      payload: { name },
-    })
-  })
-  elements.attachBtnEl.addEventListener("click", () => {
-    elements.fileInputEl.click()
-  })
-  elements.fileInputEl.addEventListener("change", () => {
-    startDance(projectConfig.ui.dances.attachmentUpdate, {
-      type: projectConfig.ui.honeyTypes.updateAttachments,
-      payload: {
-        files: Array.from(elements.fileInputEl.files || []),
-      },
-    })
-    elements.fileInputEl.value = ""
-  })
-  elements.composerEl.addEventListener("submit", (event) => {
-    event.preventDefault()
-    const project = context.activeProject()
-    if (!project) return
-    const text = elements.promptEl.value.trim()
-    if (!text && context.state.files.length === 0) return
-    startDance(projectConfig.ui.dances.submitPrompt, {
-      type: projectConfig.ui.honeyTypes.submitPrompt,
-      payload: {
-        projectId: project.id,
-        text,
-        files: Array.from(context.state.files),
-      },
-    })
-  })
-  elements.messagesEl.addEventListener("scroll", async () => {
-    if (elements.messagesEl.scrollTop > 10) return
-    const project = context.activeProject()
-    if (!project) return
-    const beforeHeight = elements.messagesEl.scrollHeight
-    const loaded = await context.loadOlderProjectSessions(project.id)
-    if (!loaded) return
-    context.renderMessages()
-    const afterHeight = elements.messagesEl.scrollHeight
-    elements.messagesEl.scrollTop = Math.max(0, afterHeight - beforeHeight)
-  })
-}
-
-function createBunProjectContext(projectConfig, options = {}) {
-  const state = cloneValue(projectConfig.initialState)
-  const t = createTranslator(options.messages || projectConfig?.i18n?.messages || {})
-  if (!state.streamingAssistantByProject || typeof state.streamingAssistantByProject !== "object") {
-    state.streamingAssistantByProject = {}
-  }
-  const apiBase = options.apiBase || projectConfig?.api?.base || "http://127.0.0.1:3000"
-  const helpers = createContractHelpers()
-  return {
-    state,
-    resolveWithReport: helpers.resolveWithReport,
-    rejectWithReport: helpers.rejectWithReport,
-    ensureProjectMessages(projectId) {
-      if (!state.messages[projectId]) state.messages[projectId] = []
-    },
-    pushMessage(projectId, role, content) {
-      if (!state.messages[projectId]) state.messages[projectId] = []
-      state.messages[projectId].push({ role, content })
-    },
-    updateAssistantStream(projectId, content, done = false) {
-      if (!state.messages[projectId]) state.messages[projectId] = []
-      const mappedIndex = state.streamingAssistantByProject[projectId]
-      const hasMappedIndex = Number.isInteger(mappedIndex) && mappedIndex >= 0
-      if (!hasMappedIndex) {
-        state.messages[projectId].push({ role: "ai", content: "", streaming: true })
-        state.streamingAssistantByProject[projectId] = state.messages[projectId].length - 1
-      }
-      const target = state.messages[projectId][state.streamingAssistantByProject[projectId]]
-      if (!target) return
-      target.role = "ai"
-      target.content = typeof content === "string" ? content : ""
-      target.streaming = !done
-      if (done) delete state.streamingAssistantByProject[projectId]
-    },
-    consumeAssistantStream(projectId, reply) {
-      const mappedIndex = state.streamingAssistantByProject[projectId]
-      if (!Number.isInteger(mappedIndex) || mappedIndex < 0) return false
-      const target = state.messages[projectId]?.[mappedIndex]
-      if (!target) {
-        delete state.streamingAssistantByProject[projectId]
-        return false
-      }
-      target.role = "ai"
-      target.content = typeof reply === "string" ? reply : ""
-      target.streaming = false
-      delete state.streamingAssistantByProject[projectId]
-      return true
-    },
-    renderProjectList() {},
-    renderMessages() {},
-    renderAttachments() {},
-    syncFiles(files) {
-      state.files = mergeAttachmentFiles(state.files, Array.from(files || []))
-    },
-    clearComposer() {
-      state.files = []
-    },
-    async request(path, init = {}) {
-      const response = await fetch(`${apiBase}${path}`, {
-        ...init,
-        headers: {
-          "Content-Type": "application/json",
-          ...(init.headers || {}),
-        },
-      })
-      const text = await response.text()
-      if (!response.ok) throw new Error(text || `${response.status} ${response.statusText}`)
-      if (!text) return null
-      try {
-        return JSON.parse(text)
-      } catch {
-        return text
-      }
-    },
-    async ensureSession(projectId, projectName) {
-      const existing = state.sessionIDs[projectId]
-      if (existing) return existing
-      const created = await this.request("/session", {
-        method: "POST",
-        body: JSON.stringify({ projectId, title: projectName }),
-      })
-      const sessionID = created?.id
-      if (!sessionID) throw new Error("创建会话失败：后端未返回 sessionID")
-      state.sessionIDs[projectId] = sessionID
-      return sessionID
-    },
-    async fileToDataUrl(file) {
-      if (typeof file === "string") {
-        const bytes = await Bun.file(file).arrayBuffer()
-        const base64 = Buffer.from(bytes).toString("base64")
-        return `data:application/octet-stream;base64,${base64}`
-      }
-      throw new Error("Bun 运行时默认仅支持 string 路径附件")
-    },
-    async sendPromptAsync(sessionID, parts) {
-      await this.request(`/session/${sessionID}/prompt_async`, {
-        method: "POST",
-        body: JSON.stringify({ parts }),
-      })
-    },
-    async waitAssistantReply() {
-      return ""
-    },
-    t,
-  }
-}
-
-export async function createBrowserLoadedProgram(loadedProject, options = {}) {
+export function createLoadedProgram(loadedProject, options = {}) {
   if (!loadedProject || typeof loadedProject !== "object") throw new Error("loadedProject 必须是对象")
   if (!loadedProject.projectConfig) throw new Error("loadedProject.projectConfig 缺失")
-  const projectConfig = loadedProject.projectConfig
-  const context = createBrowserProjectContext(projectConfig, createBrowserElements(projectConfig), {
-    ...options,
-    messages: projectConfig?.i18n?.messages || {},
-  })
-  context.t = createTranslator(projectConfig?.i18n?.messages || {})
-  return {
-    registerBees(hive) {
-      registerLoadedBees(hive, context, loadedProject.beeDescriptors || [])
-    },
-    async loadDances() {
-      return loadedProject.dances || []
-    },
-    bind(runtime) {
-      bindBrowserProjectHandlers(projectConfig, context, runtime.startDance)
-    },
-    bootstrap: projectConfig.bootstrap,
-  }
-}
-
-export async function createBunLoadedProgram(loadedProject, options = {}) {
-  if (!loadedProject || typeof loadedProject !== "object") throw new Error("loadedProject 必须是对象")
-  if (!loadedProject.projectConfig) throw new Error("loadedProject.projectConfig 缺失")
-  const context = options.context || createBunProjectContext(loadedProject.projectConfig, options)
+  const context = options.context && typeof options.context === "object" ? options.context : {}
   return {
     registerBees(hive) {
       registerLoadedBees(hive, context, loadedProject.beeDescriptors || [])
@@ -1651,20 +1088,29 @@ export async function createBunLoadedProgram(loadedProject, options = {}) {
   }
 }
 
-export async function bootBrowserLoadedProject(loadedProject, options = {}) {
-  const program = await createBrowserLoadedProgram(loadedProject, options)
+export async function bootLoadedProject(loadedProject, options = {}) {
+  const program = createLoadedProgram(loadedProject, options)
   return createSwarmRuntime(program, {
     logger: options.logger ?? resolveLogger(options),
     autoBootstrap: options.autoBootstrap,
+    awaitBootstrap: options.awaitBootstrap,
   })
 }
 
+export async function createBrowserLoadedProgram(loadedProject, options = {}) {
+  return createLoadedProgram(loadedProject, options)
+}
+
+export async function createBunLoadedProgram(loadedProject, options = {}) {
+  return createLoadedProgram(loadedProject, options)
+}
+
+export async function bootBrowserLoadedProject(loadedProject, options = {}) {
+  return bootLoadedProject(loadedProject, options)
+}
+
 export async function bootBunLoadedProject(loadedProject, options = {}) {
-  const program = await createBunLoadedProgram(loadedProject, options)
-  return createSwarmRuntime(program, {
-    logger: options.logger ?? resolveLogger(options),
-    autoBootstrap: options.autoBootstrap,
-  })
+  return bootLoadedProject(loadedProject, options)
 }
 
 export function danceFileToPath(url) {

@@ -1,8 +1,22 @@
 import { expect, test } from "bun:test"
+import path from "node:path"
+import { mkdirSync } from "node:fs"
 import { queueAssistantMessageApiBee } from "./bee.1.0.0.js"
 
 test("queue-assistant-message-api bee contract", async () => {
+  const projectsRoot = path.resolve("/tmp", "swarm-test-queue-assistant-message")
+  mkdirSync(path.resolve(projectsRoot, "p1"), { recursive: true })
   const context = {
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          projectId: "p1",
+          messages: [{ id: "m-user", parts: [{ type: "text", text: "hello" }], info: { role: "user" } }],
+        },
+      },
+    },
+    runtime: { projectsRoot },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
@@ -14,9 +28,6 @@ test("queue-assistant-message-api bee contract", async () => {
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    appendAssistantMessage() {
-      return { id: "m2" }
     },
   }
   const bee = queueAssistantMessageApiBee(context)
@@ -28,12 +39,22 @@ test("queue-assistant-message-api bee contract", async () => {
     },
   })
   expect(output.resultHoney.type).toBe("PromptResultHoney")
-  expect(output.resultHoney.payload.messageID).toBe("m2")
+  expect(typeof output.resultHoney.payload.messageID).toBe("string")
   expect(output.reportHoney.type).toBe("BeeReportHoney")
 })
 
 test("queue-assistant-message-api keeps streamed message when messageID already exists", async () => {
   const context = {
+    state: {
+      sessions: {
+        s1: {
+          id: "s1",
+          projectId: "p1",
+          messages: [{ id: "m-stream", parts: [{ type: "text", text: "streaming" }], info: { role: "assistant" } }],
+        },
+      },
+    },
+    runtime: { projectsRoot: path.resolve("/tmp", "swarm-test-queue-assistant-message-2") },
     resolveWithReport(_beeName, _summary, resultHoney) {
       return Promise.resolve({
         resultHoney,
@@ -45,13 +66,6 @@ test("queue-assistant-message-api keeps streamed message when messageID already 
         errorHoney,
         reportHoney: { type: "BeeReportHoney", payload: {} },
       })
-    },
-    getSessionMessage(_sessionID, messageID) {
-      if (messageID === "m-stream") return { id: "m-stream" }
-      return null
-    },
-    appendAssistantMessage() {
-      throw new Error("should not append duplicate message")
     },
   }
   const bee = queueAssistantMessageApiBee(context)
